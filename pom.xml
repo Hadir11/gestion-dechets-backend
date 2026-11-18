@@ -57,11 +57,6 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -92,12 +87,6 @@
                 <configuration>
                     <mainClass>org.municipalite.gestiondechets.GestionDechetsApplication</mainClass>
                     <executable>true</executable>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

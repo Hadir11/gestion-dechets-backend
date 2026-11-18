@@ -62,3 +62,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Local application settings and credentials
+**/application-local.properties
+**/application-prod.local.properties
+.env
+.env.*
+!.env.example

@@ -32,6 +32,7 @@ public class Employe implements UserDetails {
     // Champs pour l'authentification
     private String username;
     private String password;
+    @Builder.Default
     private boolean enabled = true;
 
     @DocumentReference

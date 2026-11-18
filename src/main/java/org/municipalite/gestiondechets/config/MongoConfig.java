@@ -3,6 +3,7 @@ package org.municipalite.gestiondechets.config;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
@@ -11,6 +12,12 @@ import java.util.Arrays;
 
 @Configuration
 public class MongoConfig extends AbstractMongoClientConfiguration {
+
+    @Value("${spring.data.mongodb.uri}")
+    private String mongoUri;
+
+    @Value("${spring.data.mongodb.database:gestion-dechet}")
+    private String databaseName;
 
     @Override
     public MongoCustomConversions customConversions() {
@@ -36,12 +43,11 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "gestion-dechet"; // le nom exact de ta base dans le port 27027
+        return databaseName;
     }
 
     @Override
     public MongoClient mongoClient() {
-        // Forcer le port 27027
-        return MongoClients.create("mongodb://localhost:27027/gestion-dechet");
+        return MongoClients.create(mongoUri);
     }
 }
