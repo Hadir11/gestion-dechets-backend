@@ -10,7 +10,7 @@ API REST de démonstration pour organiser la collecte des déchets à l’échel
 - Suivi des alertes liées au remplissage et consultation de statistiques pour le tableau de bord.
 - Création et optimisation de tournées, avec un calcul de plus court chemin par Dijkstra.
 - Endpoints expérimentaux pour la prédiction du remplissage et la détection d’anomalies. Ces traitements sont heuristiques et doivent être évalués avant tout usage réel.
-- Endpoints d’authentification et filtre JWT présents dans le code. La configuration Spring Security actuelle autorise cependant les requêtes sans authentification : les règles d’accès doivent être corrigées avant une mise en ligne.
+- Endpoints d’authentification et service JWT présents. Le filtre JWT est désactivé et Spring Security autorise les requêtes sans authentification : les règles d’accès doivent être corrigées avant un déploiement public.
 
 ## Technologies
 
@@ -24,6 +24,9 @@ API REST de démonstration pour organiser la collecte des déchets à l’échel
 - JDK 17
 - MongoDB accessible depuis l’application
 - Maven 3.8 ou plus récent
+- Node.js et npm pour le frontend
+
+Le backend se trouve à la racine du dépôt. Le frontend Next.js est dans [frontend/](frontend/README.md).
 
 ## Configuration locale
 
@@ -38,6 +41,20 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=local"
 Pour lancer la vérification Maven : `mvn test`. Le dépôt ne contient pas encore de tests automatisés ; cette commande vérifie surtout la compilation.
 
 En local, l’API écoute par défaut sur `http://localhost:18081`, comme configuré dans `.env.example` du frontend. Les routes sont préfixées par `/api` ; par exemple, l’authentification est disponible sous `/api/auth`.
+
+## Frontend
+
+Dans un autre terminal, à partir du dossier `frontend` :
+
+```powershell
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+L’interface écoute sur `http://localhost:3000`. Elle utilise `NEXT_PUBLIC_API_BASE_URL` pour joindre l’API ; la valeur locale par défaut est `http://localhost:18081/api`.
+
+Pour compiler le frontend : `npm run build`. Pour le lancer en mode production après la compilation : `npm run start`.
 
 ## Principales routes
 
