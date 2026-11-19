@@ -30,7 +30,7 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   };
 
   const getNavItems = (): NavItem[] => {
-    const role = String(user?.role || '').toUpperCase();
+    const role = String(user?.roleCode || user?.role || '').toUpperCase();
     const common: NavItem[] = [
       { label: 'Vue générale', href: '/dashboard', icon: '⌂' },
       { label: 'Carte', href: '/map', icon: '⌖' },

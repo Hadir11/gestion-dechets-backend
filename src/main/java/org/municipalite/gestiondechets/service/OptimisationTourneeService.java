@@ -27,11 +27,8 @@ public class OptimisationTourneeService {
         List<PointCollecte> pointsCritiques = pointCollecteRepo
                 .findByNiveauRemplissageGreaterThan(70);
 
-        System.out.println("📍 Points critiques trouvés: " + pointsCritiques.size());
-
         if (pointsCritiques.isEmpty()) {
-            System.out.println("⚠️ Aucun point critique, création tournée de démo");
-            return Arrays.asList(creerTourneeDemo());
+            return List.of();
         }
 
         // 2. Récupérer véhicule disponible
@@ -167,15 +164,16 @@ public class OptimisationTourneeService {
         LocalTime heureFinEstimee = heureDepart.plusMinutes(duree);
         LocalDateTime dateHeureFinEstimee = LocalDateTime.of(LocalDate.now(), heureFinEstimee);
 
-        // Récupérer un employé disponible
+        // N'affecter qu'un agent de collecte réellement disponible.
         Employe employe = employeRepo.findByDisponibleTrue()
                 .stream()
+                .filter(candidate -> candidate.isEnabled()
+                        && candidate.getAuthorities().stream().anyMatch(authority -> "ROLE_AGENT".equals(authority.getAuthority())))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new IllegalStateException("Aucun agent de collecte disponible"));
 
         // Créer la tournée AVEC les heures de fin
         Tournee tournee = Tournee.builder()
-                ._id("TOUR_" + System.currentTimeMillis())
                 .date(LocalDate.now())
                 .heureDepart(heureDepart)
                 .heureFinEstimee(heureFinEstimee)  // AJOUTÉ
@@ -196,52 +194,6 @@ public class OptimisationTourneeService {
         System.out.println("🕐 Véhicule sera libéré automatiquement à: " + dateHeureFinEstimee);
 
         return tourneeRepo.save(tournee);
-    }
-
-    private Tournee creerTourneeDemo() {
-        System.out.println("🎭 Création tournée de démo - " + LocalDateTime.now());
-
-        // Créer des points de démo
-        List<PointCollecte> pointsDemo = Arrays.asList(
-                PointCollecte.builder()
-                        ._id("DEMO_PC1")
-                        .adresse("Place de la République (Démo)")
-                        .latitude(36.8065)
-                        .longitude(10.1815)
-                        .niveauRemplissage(85)
-                        .type("ORGANIQUE")
-                        .capaciteMax(1200)
-                        .etat("Actif")
-                        .build(),
-                PointCollecte.builder()
-                        ._id("DEMO_PC2")
-                        .adresse("Rue Habib Bourguiba (Démo)")
-                        .latitude(36.7980)
-                        .longitude(10.1750)
-                        .niveauRemplissage(78)
-                        .type("PLASTIQUE")
-                        .capaciteMax(800)
-                        .etat("Actif")
-                        .build()
-        );
-
-        // Sauvegarder les points de démo
-        pointCollecteRepo.saveAll(pointsDemo);
-
-        // Véhicule de démo
-        Vehicule vehiculeDemo = Vehicule.builder()
-                ._id("DEMO_VEH")
-                .matricule("TU-DEMO")
-                .typeVehicule("CAMION")
-                .disponible(true)
-                .latitude(36.8000)
-                .longitude(10.1700)
-                .capacite(5000)
-                .build();
-
-        vehiculeRepo.save(vehiculeDemo);
-
-        return creerTournee(vehiculeDemo, pointsDemo);
     }
 
     private double calculerDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -302,18 +254,13 @@ public class OptimisationTourneeService {
                 tournee.getPointsCollecte().size() : 0;
         double distance = tournee.getDistanceEstimee();
 
-        // Statistiques calculées
+        // Ces valeurs décrivent des estimations géométriques et opérationnelles, pas des économies mesurées.
         stats.put("pointsVisites", nbPoints);
-        stats.put("distanceTotale", String.format("%.2f km", distance));
-        stats.put("reductionCO2", String.format("%.2f kg", distance * 0.15));
-        stats.put("gainTemps", Math.round((1 - (distance / Math.max(nbPoints * 10.0, 1))) * 100) + "%");
-        stats.put("economieCarburant", String.format("%.2f L", distance * 0.7));
-        stats.put("coutEstime", String.format("%.2f DT", distance * 2 + nbPoints * 5));
+        stats.put("distanceEstimeeKm", Math.round(distance * 100.0) / 100.0);
+        stats.put("dureeEstimeeMinutes", tournee.getDureeEstimee());
 
-        // Ajouter l'heure de fin estimée
         if (tournee.getHeureFinEstimee() != null) {
             stats.put("heureFinEstimee", tournee.getHeureFinEstimee().toString());
-            stats.put("liberationAuto", "Véhicule libéré automatiquement à cette heure");
         }
 
         return stats;

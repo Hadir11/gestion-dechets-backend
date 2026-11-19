@@ -2,7 +2,7 @@
 
 API REST de démonstration pour organiser la collecte des déchets à l’échelle d’une municipalité. Le backend est construit avec Spring Boot, Java 17 et MongoDB.
 
-> **État de sécurité :** ce dépôt est destiné à une démonstration locale. Spring Security autorise actuellement toutes les requêtes. Ne déployez pas cette API sur Internet avant d’avoir activé et vérifié l’authentification et les autorisations par rôle.
+> **État de sécurité :** l’API exige un jeton JWT valide, limite les écritures aux rôles autorisés, ne permet la création d’employés qu’à un administrateur et n’accepte plus d’inscriptions publiques. Avant un déploiement réel, configurez les secrets et domaines autorisés, puis exécutez les vérifications locales ci-dessous.
 
 ## Fonctionnalités
 
@@ -10,7 +10,7 @@ API REST de démonstration pour organiser la collecte des déchets à l’échel
 - Suivi des alertes liées au remplissage et consultation de statistiques pour le tableau de bord.
 - Création et optimisation de tournées, avec un calcul de plus court chemin par Dijkstra.
 - Endpoints expérimentaux pour la prédiction du remplissage et la détection d’anomalies. Ces traitements sont heuristiques et doivent être évalués avant tout usage réel.
-- Endpoints d’authentification et service JWT présents. Le filtre JWT est désactivé et Spring Security autorise les requêtes sans authentification : les règles d’accès doivent être corrigées avant un déploiement public.
+- Authentification JWT sans session serveur, mots de passe hachés avec BCrypt et autorisations par rôle.
 
 ## Technologies
 
@@ -30,7 +30,7 @@ Le backend se trouve à la racine du dépôt. Le frontend Next.js est dans [fron
 
 ## Configuration locale
 
-Copiez `src/main/resources/application-local.properties.example` vers `src/main/resources/application-local.properties`, puis adaptez l’URI MongoDB, le secret JWT et les identifiants de développement. Ce fichier local est ignoré par Git.
+Copiez `src/main/resources/application-local.properties.example` vers `src/main/resources/application-local.properties`, puis adaptez l’URI MongoDB et remplacez le secret JWT par une valeur aléatoire d’au moins 32 octets. Ce fichier local est ignoré par Git.
 
 Lancez MongoDB, puis démarrez l’application depuis la racine du projet :
 
@@ -38,9 +38,29 @@ Lancez MongoDB, puis démarrez l’application depuis la racine du projet :
 mvn spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-Pour lancer la vérification Maven : `mvn test`. Le dépôt ne contient pas encore de tests automatisés ; cette commande vérifie surtout la compilation.
+Pour lancer la vérification Maven : `mvn test`. Le projet doit encore recevoir une suite de tests métier et de sécurité ; la compilation seule ne garantit pas le bon fonctionnement de tous les parcours.
 
-En local, l’API écoute par défaut sur `http://localhost:18081`, comme configuré dans `.env.example` du frontend. Les routes sont préfixées par `/api` ; par exemple, l’authentification est disponible sous `/api/auth`.
+En local, l’API écoute par défaut sur `http://localhost:18081`, comme configuré dans `.env.example` du frontend. Les routes sont préfixées par `/api` ; la connexion est disponible sous `/api/auth/login`. Les routes métier exigent `Authorization: Bearer <jeton>`.
+
+### Création initiale de l’administrateur
+
+Si la base ne contient pas encore d’administrateur, démarrez l’API avec un jeton de configuration temporaire. Dans PowerShell :
+
+```powershell
+$env:BOOTSTRAP_ADMIN_TOKEN = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
+$env:BOOTSTRAP_ADMIN_TOKEN
+mvn spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
+Dans un autre terminal PowerShell, créez le premier compte. Choisissez un mot de passe unique d’au moins 12 caractères :
+
+```powershell
+$env:BOOTSTRAP_ADMIN_TOKEN = 'COLLER_ICI_LE_JETON_AFFICHE_DANS_LE_PREMIER_TERMINAL'
+$body = @{ nom = 'Admin'; prenom = 'Principal'; username = 'admin'; password = 'CHOISIR_UN_SECRET_LONG'; email = 'admin@example.local' } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'http://localhost:18081/api/auth/bootstrap-admin' -Headers @{ 'X-Bootstrap-Token' = $env:BOOTSTRAP_ADMIN_TOKEN } -ContentType 'application/json' -Body $body
+```
+
+Après la création, arrêtez l’API, retirez le jeton avec `Remove-Item Env:BOOTSTRAP_ADMIN_TOKEN`, puis redémarrez-la. Le point de création initial refuse toute nouvelle création dès qu’un administrateur existe. Les comptes suivants se créent depuis l’interface en étant connecté comme administrateur.
 
 ## Frontend
 
@@ -72,7 +92,7 @@ Les contrôleurs documentent les opérations disponibles. Aucun contrat OpenAPI 
 
 ## Déploiement
 
-Le profil `prod` lit ses paramètres sensibles depuis les variables d’environnement `MONGODB_URI`, `JWT_SECRET`, `APP_ADMIN_USERNAME` et `APP_ADMIN_PASSWORD`. Configurez également `CORS_ALLOWED_ORIGINS` pour les domaines réellement autorisés. N’utilisez pas les valeurs de démonstration en production.
+Le profil `prod` exige `MONGODB_URI`, `JWT_SECRET` (au moins 32 octets aléatoires) et `CORS_ALLOWED_ORIGINS` (origines exactes, séparées par des virgules). Ne définissez `BOOTSTRAP_ADMIN_TOKEN` que pendant la création initiale du compte, puis retirez-le et redémarrez l’API. Utilisez HTTPS, un compte MongoDB aux privilèges minimaux et des secrets dédiés à chaque environnement.
 
 ## État du projet
 

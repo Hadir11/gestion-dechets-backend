@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -16,7 +16,7 @@ public class CorsConfig {
     private String allowedOrigins;
 
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
@@ -31,12 +31,12 @@ public class CorsConfig {
         // Autorise tous les headers
         config.addAllowedHeader("*");
 
-        // Autorise les cookies/credentials
-        config.setAllowCredentials(true);
+        // L'API utilise un jeton Bearer et n'a pas besoin de cookies inter-origines.
+        config.setAllowCredentials(false);
 
         // Enregistre cette configuration pour toutes les routes
         source.registerCorsConfiguration("/**", config);
 
-        return new CorsFilter(source);
+        return source;
     }
 }

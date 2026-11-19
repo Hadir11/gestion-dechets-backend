@@ -26,10 +26,29 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         Employe e = employe.get();
 
+        String role = e.getRoleCode();
+        if (role == null || role.isBlank()) {
+            role = e.getRole();
+        }
+        role = role == null ? "" : role.trim().toUpperCase().replace('-', '_').replace(' ', '_');
+        if (role.startsWith("ROLE_")) {
+            role = role.substring(5);
+        }
+        role = switch (role) {
+            case "AGENT_COLLECTE" -> "AGENT";
+            case "CHEF" -> "CHEF_EQUIPE";
+            case "TECHNICIEN", "CENTRE_TECHNIQUE" -> "TECH";
+            case "ADMINISTRATEUR" -> "ADMIN";
+            default -> role;
+        };
+        if (role.isBlank()) {
+            throw new UsernameNotFoundException("Rôle manquant pour l'utilisateur");
+        }
+
         return User.builder()
                 .username(e.getUsername())
                 .password(e.getPassword())
-                .roles(e.getRole())  // Spring ajoute automatiquement "ROLE_"
+                .authorities("ROLE_" + role)
                 .disabled(!e.isEnabled())
                 .build();
     }

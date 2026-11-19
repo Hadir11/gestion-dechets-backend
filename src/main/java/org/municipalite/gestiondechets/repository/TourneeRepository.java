@@ -2,6 +2,7 @@ package org.municipalite.gestiondechets.repository;
 
 import org.municipalite.gestiondechets.model.Tournee;
 import org.municipalite.gestiondechets.model.Vehicule;
+import org.municipalite.gestiondechets.model.Employe;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
@@ -21,5 +22,6 @@ public interface TourneeRepository extends MongoRepository<Tournee, String> {
     List<Tournee> findByStatus(String status);
 
     List<Tournee> findByVehiculeAndStatus(Vehicule vehicule, String status);
+    List<Tournee> findByEmploye(Employe employe);
     List<Tournee> findByDateHeureFinEstimeeBefore(LocalDateTime dateTime);
 }

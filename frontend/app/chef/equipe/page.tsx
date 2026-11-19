@@ -47,7 +47,7 @@ export default function ChefEquipePage() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/employes`, {
+      const response = await fetch(`${API_BASE_URL}/chef/agents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -64,14 +64,12 @@ export default function ChefEquipePage() {
         throw new Error(`Erreur ${response.status}: ${response.statusText}`);
       }
 
-      const allEmployes = await response.json();
-      const agentsOnly = allEmployes.filter((employe: Agent) =>
-        employe.roleCode === 'AGENT' ||
-        employe.roleCode === 'AGENT_COLLECTE' ||
-        employe.role === 'Agent de collecte'
-      );
-
-      setAgents(agentsOnly);
+      const agents = await response.json();
+      setAgents((Array.isArray(agents) ? agents : []).map((agent: any) => ({
+        ...agent,
+        id: agent.id || agent._id,
+        isActive: Boolean(agent.disponible ?? agent.enabled),
+      })));
     } catch (err: any) {
       setError(err.message || 'Erreur lors du chargement des agents');
       console.error('Erreur:', err);

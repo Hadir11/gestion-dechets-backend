@@ -1,13 +1,11 @@
 # Copy this file to application-local.properties and replace the sample values.
 # application-local.properties is ignored by Git.
-spring.main.allow-circular-references=true
 jwt.secret=replace-with-a-random-local-secret-at-least-32-characters
 jwt.expiration=86400000
 spring.application.name=gestion-dechets
 spring.data.mongodb.uri=mongodb://localhost:27027/gestion-dechet
 spring.data.mongodb.database=gestion-dechet
 server.port=18081
-spring.security.user.name=localdev
-spring.security.user.password=change-this-local-password
-management.endpoints.web.exposure.include=health,info
+management.endpoints.web.exposure.include=health
 cors.allowed.origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+security.bootstrap-token=${BOOTSTRAP_ADMIN_TOKEN:}

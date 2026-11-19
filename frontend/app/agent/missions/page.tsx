@@ -73,7 +73,7 @@ export default function AgentMissionsPage() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/tournees`, {
+      const response = await fetch(`${API_BASE_URL}/agent/mes-tournees`, {
         headers: authService.getAuthHeaders(),
       });
 
@@ -152,16 +152,10 @@ export default function AgentMissionsPage() {
 
       // Préparer les données pour l'API
       const alerteData = {
+        pointCollecteId: pointSelectionne?.id || null,
         typeAlerte: selectedProblem,
         message: alertMessage,
-        pointCollecte: pointSelectionne ? {
-          _id: pointSelectionne.id,
-          nom: pointSelectionne.nom,
-          adresse: pointSelectionne.adresse
-        } : null,
         niveauRemplissage: pointSelectionne?.niveauRemplissage || 0,
-        dateAlerte: new Date().toISOString(),
-        traitee: false
       };
 
       const response = await fetch(`${API_BASE_URL}/alertes`, {

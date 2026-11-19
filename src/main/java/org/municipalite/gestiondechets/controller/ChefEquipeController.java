@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/chef")
-@PreAuthorize("hasRole('CHEF_EQUIPE')")
+@PreAuthorize("hasAnyRole('CHEF_EQUIPE', 'ADMIN')")
 public class ChefEquipeController {
 
     @Autowired
@@ -92,6 +92,12 @@ public class ChefEquipeController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/agents")
+    public ResponseEntity<?> getAgents() {
+        List<Employe> agents = employeRepository.findByRoleCodeIn(List.of("AGENT", "AGENT_COLLECTE"));
+        return ResponseEntity.ok(agents);
     }
 
     @PostMapping("/affecter-tournee/{employeId}")

@@ -4,6 +4,8 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +33,7 @@ public class Employe implements UserDetails {
 
     // Champs pour l'authentification
     private String username;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Builder.Default
     private boolean enabled = true;
@@ -39,8 +42,17 @@ public class Employe implements UserDetails {
     private Zone zone;
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleCode));
+        String authority = roleCode == null || roleCode.isBlank() ? role : roleCode;
+        if (authority == null || authority.isBlank()) return Collections.emptyList();
+        authority = authority.trim().toUpperCase().replace('-', '_').replace(' ', '_');
+        if (authority.startsWith("ROLE_")) authority = authority.substring(5);
+        if ("AGENT_COLLECTE".equals(authority)) authority = "AGENT";
+        if ("CHEF".equals(authority)) authority = "CHEF_EQUIPE";
+        if ("TECHNICIEN".equals(authority) || "CENTRE_TECHNIQUE".equals(authority)) authority = "TECH";
+        if ("ADMINISTRATEUR".equals(authority)) authority = "ADMIN";
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + authority));
     }
 
     @Override
@@ -54,16 +66,19 @@ public class Employe implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
@@ -74,8 +89,8 @@ public class Employe implements UserDetails {
     }
 
     public enum RoleUtilisateur {
-        ADMIN("ROLE_ADMIN", "Responsable Propreté"),
-        CHEF_EQUIPE("ROLE_CHEF_EQUIPE", "Chef d'Équipe"),
+        ADMIN("ROLE_ADMIN", "Responsable PropretÃ©"),
+        CHEF_EQUIPE("ROLE_CHEF_EQUIPE", "Chef d'Ã‰quipe"),
         AGENT_COLLECTE("ROLE_AGENT", "Agent de Collecte"),
         CENTRE_TECHNIQUE("ROLE_TECH", "Centre Technique"),
         RESPONSABLE_RECYCLAGE("ROLE_RECYCLAGE", "Responsable du Recyclage");

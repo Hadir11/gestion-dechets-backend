@@ -6,5 +6,6 @@ public interface AuthService {
     String login(String username, String password);
     Employe register(Employe employe);
     Employe registerByAdmin(Employe employe);
+    Employe bootstrapAdmin(Employe employe);
     Employe getEmployeByUsername(String username);
 }

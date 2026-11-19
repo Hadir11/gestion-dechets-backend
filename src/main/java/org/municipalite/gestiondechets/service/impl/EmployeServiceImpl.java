@@ -7,6 +7,7 @@ import org.municipalite.gestiondechets.repository.ZoneRepository;
 import org.municipalite.gestiondechets.service.EmployeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +21,21 @@ public class EmployeServiceImpl implements EmployeService {
     @Autowired
     private ZoneRepository zoneRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public Employe createEmploye(Employe employe) {
+        if (employe.getUsername() == null || employe.getUsername().isBlank()
+                || employe.getPassword() == null || employe.getPassword().length() < 12) {
+            throw new IllegalArgumentException("Identifiant requis et mot de passe de 12 caractères minimum requis");
+        }
+        if (employeRepository.findByUsername(employe.getUsername().trim()).isPresent()) {
+            throw new IllegalArgumentException("Nom d'utilisateur déjà existant");
+        }
+        employe.setUsername(employe.getUsername().trim());
+        employe.setPassword(passwordEncoder.encode(employe.getPassword()));
+        employe.setEnabled(true);
         // Hydrater la zone si seulement l'ID est fourni
         if (employe.getZone() != null && employe.getZone().get_id() != null) {
             Zone zone = zoneRepository.findById(employe.getZone().get_id()).orElse(null);

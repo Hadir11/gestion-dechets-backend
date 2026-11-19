@@ -104,8 +104,8 @@ export default function NewEmployePage() {
       setError('Les mots de passe ne correspondent pas');
       return false;
     }
-    if (formData.password.length < 6) {
-      setError('Le mot de passe doit faire au moins 6 caractères');
+    if (formData.password.length < 12) {
+      setError('Le mot de passe doit faire au moins 12 caractères');
       return false;
     }
     if (!formData.telephone.trim()) {

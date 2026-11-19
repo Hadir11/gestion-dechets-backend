@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import AuthGuard from '../components/AuthGuard';
-import { authService } from '../services/auth-service';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '../services/api-base';
+import { authService } from '../services/auth-service';
 
 interface Tournee {
   _id: string;
   date: string;
   heureDepart: string;
+  heureFinEstimee?: string;
   status: string;
   dureeEstimee: number;
   distanceEstimee: number;
@@ -20,31 +20,21 @@ interface Tournee {
 }
 
 interface Statistiques {
-  pointsVisites: number;
-  distanceTotale: string;
-  reductionCO2: string;
-  gainTemps: string;
-  economieCarburant: string;
-  coutEstime: string;
+  pointsVisites?: number;
+  distanceEstimeeKm?: number;
+  dureeEstimeeMinutes?: number;
+  heureFinEstimee?: string;
 }
 
 export default function OptimisationPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    tournee: Tournee;
-    statistiques: Statistiques;
+    tournee?: Tournee;
+    statistiques?: Statistiques;
   } | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-
-  // Charger l'utilisateur
-  useState(() => {
-    const currentUser = authService.getUser();
-    setUser(currentUser);
-  });
 
   // Fonction pour lancer l'optimisation
   const lancerOptimisation = async () => {
@@ -59,42 +49,14 @@ export default function OptimisationPage() {
           ...authService.getAuthHeaders(),
         },
       });
-
       const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || `Erreur ${response.status}`);
       setResult(data);
-
-      if (data.success) {
-        console.log('✅ Optimisation réussie:', data);
-      }
     } catch (error) {
-      console.error('❌ Erreur optimisation:', error);
-      // Mode démo en cas d'erreur
+      console.error('Erreur optimisation:', error);
       setResult({
-        success: true,
-        message: "Mode démo - Optimisation simulée",
-        tournee: {
-          _id: "DEMO_TOUR_" + Date.now(),
-          date: new Date().toISOString().split('T')[0],
-          heureDepart: "08:30",
-          status: "PLANIFIÉE",
-          dureeEstimee: 267,
-          distanceEstimee: 15.87,
-          pointsCollecte: [
-            { _id: "1", adresse: "Avenue Habib Bourguiba", niveauRemplissage: 92, type: "Plastique" },
-            { _id: "2", adresse: "Cité Olympique", niveauRemplissage: 88, type: "Verre" },
-            { _id: "3", adresse: "Zone Industrielle", niveauRemplissage: 78, type: "Métal" }
-          ],
-          vehicule: { _id: "VH001", matricule: "TU-2025", typeVehicule: "Camion" },
-          employe: { _id: "EMP001", nom: "ali", prenom: "semi" }
-        },
-        statistiques: {
-          pointsVisites: 3,
-          distanceTotale: "15.87 km",
-          reductionCO2: "2.38 kg",
-          gainTemps: "47%",
-          economieCarburant: "11.11 L",
-          coutEstime: "46.74 DT"
-        }
+        success: false,
+        message: error instanceof Error ? error.message : 'Impossible de contacter le serveur.',
       });
     } finally {
       setLoading(false);
@@ -127,8 +89,7 @@ export default function OptimisationPage() {
           </div>
 
           <p style={{ color: '#6b7280', fontSize: '16px', lineHeight: '1.5' }}>
-            Utilisez l'algorithme <strong>Dijkstra</strong> pour générer automatiquement le trajet optimal
-            entre les points de collecte critiques. Le système analyse les niveaux de remplissage en temps réel.
+            L’algorithme ordonne les points critiques selon leur proximité géographique. Les distances sont des estimations à vol d’oiseau, pas des itinéraires routiers.
           </p>
         </div>
 
@@ -151,10 +112,10 @@ export default function OptimisationPage() {
               marginBottom: '25px'
             }}>
               <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '15px' }}>
-                🧠 Algorithme Dijkstra
+                🧭 Ordonnancement des points
               </h2>
               <p style={{ color: '#6b7280', marginBottom: '15px' }}>
-                Cet algorithme trouve le chemin le plus court entre tous les points de collecte critiques ({'>'}70% remplissage).
+                Le calcul commence par les points de collecte dont le remplissage dépasse 70 %, puis les ordonne par proximité géographique.
               </p>
 
               <div style={{
@@ -168,9 +129,9 @@ export default function OptimisationPage() {
                 </h3>
                 <ol style={{ color: '#6b7280', margin: 0, paddingLeft: '20px' }}>
                   <li>Récupération des points critiques ({'>'}70%)</li>
-                  <li>Construction du graphe de distances</li>
-                  <li>Application de l'algorithme Dijkstra</li>
-                  <li>Sélection du chemin optimal</li>
+                  <li>Calcul des distances géographiques estimées</li>
+                  <li>Ordonnancement glouton par plus proche voisin</li>
+                  <li>Enregistrement d’une tournée planifiée</li>
                   <li>Affectation du véhicule disponible</li>
                   <li>Calcul des statistiques d'économie</li>
                 </ol>
@@ -253,7 +214,7 @@ export default function OptimisationPage() {
                   <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
                     {result.success ? '✅ Résultats' : '❌ Erreur'}
                   </h2>
-                  <button
+                  {result.tournee && <button
                     onClick={() => setShowDetails(!showDetails)}
                     style={{
                       backgroundColor: '#f3f4f6',
@@ -266,7 +227,7 @@ export default function OptimisationPage() {
                     }}
                   >
                     {showDetails ? 'Masquer détails' : 'Afficher détails'}
-                  </button>
+                  </button>}
                 </div>
 
                 <p style={{ color: result.success ? '#10b981' : '#ef4444', marginBottom: '20px' }}>
@@ -353,20 +314,7 @@ export default function OptimisationPage() {
         <div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Fin estimée de la tournée</div>
           <div style={{ fontWeight: '600', color: '#111827' }}>
-            {(() => {
-              // Calculer l'heure de fin (heure départ + durée)
-              const heureDepart = result.tournee.heureDepart || "08:00";
-              const [hours, minutes] = heureDepart.split(':').map(Number);
-              const duree = result.tournee.dureeEstimee || 0;
-
-              const dateFin = new Date();
-              dateFin.setHours(hours, minutes + duree);
-
-              return dateFin.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-            })()}
+            {result.tournee.heureFinEstimee || 'Non renseignée'}
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
             Le véhicule sera libéré automatiquement à cette heure
@@ -388,12 +336,12 @@ export default function OptimisationPage() {
                       maxHeight: '200px',
                       overflowY: 'auto'
                     }}>
-                      {result.tournee.pointsCollecte?.map((point: any, index: number) => (
+                      {(result.tournee.pointsCollecte ?? []).map((point: any, index: number, points: any[]) => (
                         <div key={point._id} style={{
                           display: 'flex',
                           alignItems: 'center',
                           padding: '10px 0',
-                          borderBottom: index < result.tournee.pointsCollecte.length - 1 ? '1px solid #e5e7eb' : 'none'
+                          borderBottom: index < points.length - 1 ? '1px solid #e5e7eb' : 'none'
                         }}>
                           <div style={{
                             width: '30px',
@@ -426,95 +374,17 @@ export default function OptimisationPage() {
               </div>
             )}
 
-            {/* Carte de comparaison */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '20px' }}>
-                📊 Comparaison avant/après optimisation
-              </h3>
-
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                      borderBottom: '2px solid #e5e7eb',
-                      color: '#6b7280',
-                      fontWeight: '600'
-                    }}>Indicateur</th>
-                    <th style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                      borderBottom: '2px solid #e5e7eb',
-                      color: '#6b7280',
-                      fontWeight: '600'
-                    }}>Sans optimisation</th>
-                    <th style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                      borderBottom: '2px solid #e5e7eb',
-                      color: '#6b7280',
-                      fontWeight: '600'
-                    }}>Avec optimisation</th>
-                    <th style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                      borderBottom: '2px solid #e5e7eb',
-                      color: '#6b7280',
-                      fontWeight: '600'
-                    }}>Gain</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>Distance</td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.statistiques?.distanceTotale ?
-                        `${(parseFloat(result.statistiques.distanceTotale.split(' ')[0]) * 1.5).toFixed(2)} km` :
-                        '23.81 km'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.statistiques?.distanceTotale || '15.87 km'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb', color: '#10b981', fontWeight: '600' }}>
-                      -33%
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>Temps</td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.tournee?.dureeEstimee ?
-                        `${Math.round(result.tournee.dureeEstimee * 1.4)} min` :
-                        '374 min'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.tournee?.dureeEstimee ? `${result.tournee.dureeEstimee} min` : '267 min'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb', color: '#10b981', fontWeight: '600' }}>
-                      {result?.statistiques?.gainTemps || '47%'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>CO₂</td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.statistiques?.reductionCO2 ?
-                        `${(parseFloat(result.statistiques.reductionCO2.split(' ')[0]) * 1.5).toFixed(2)} kg` :
-                        '3.57 kg'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb' }}>
-                      {result?.statistiques?.reductionCO2 || '2.38 kg'}
-                    </td>
-                    <td style={{ padding: '10px', borderBottom: '1px solid #e5e7eb', color: '#10b981', fontWeight: '600' }}>
-                      -33%
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '25px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>📊 Mesures de la tournée</h3>
+              <p style={{ color: '#6b7280', marginBottom: '16px' }}>Les distances sont estimées à partir des coordonnées géographiques. Aucune comparaison historique ni économie réelle n’est calculée.</p>
+              {result?.tournee ? (
+                <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+                  <div><dt style={{ color: '#6b7280', fontSize: '13px' }}>Points à visiter</dt><dd style={{ fontWeight: 600 }}>{result.tournee.pointsCollecte?.length ?? 0}</dd></div>
+                  <div><dt style={{ color: '#6b7280', fontSize: '13px' }}>Distance estimée</dt><dd style={{ fontWeight: 600 }}>{Number(result.tournee.distanceEstimee).toFixed(2)} km</dd></div>
+                  <div><dt style={{ color: '#6b7280', fontSize: '13px' }}>Durée estimée</dt><dd style={{ fontWeight: 600 }}>{result.tournee.dureeEstimee} min</dd></div>
+                  <div><dt style={{ color: '#6b7280', fontSize: '13px' }}>Fin estimée</dt><dd style={{ fontWeight: 600 }}>{result.tournee.heureFinEstimee || '—'}</dd></div>
+                </dl>
+              ) : <p style={{ color: '#6b7280' }}>Les mesures apparaîtront après une optimisation réussie.</p>}
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import org.municipalite.gestiondechets.model.Employe;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 
 import java.security.Key;
 import java.util.Date;
@@ -23,6 +24,16 @@ public class JwtService {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+
+    @PostConstruct
+    void validateJwtConfiguration() {
+        if (secret == null || secret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET doit contenir au moins 32 octets aléatoires");
+        }
+        if (expiration == null || expiration <= 0) {
+            throw new IllegalStateException("JWT_EXPIRATION doit être positif");
+        }
+    }
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());

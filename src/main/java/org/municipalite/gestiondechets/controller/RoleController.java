@@ -3,6 +3,9 @@ package org.municipalite.gestiondechets.controller;
 import org.springframework.security.core.Authentication;
 import org.municipalite.gestiondechets.model.Employe;
 import org.municipalite.gestiondechets.repository.EmployeRepository;
+import org.municipalite.gestiondechets.repository.PointCollecteRepository;
+import org.municipalite.gestiondechets.repository.TourneeRepository;
+import org.municipalite.gestiondechets.repository.AlerteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,12 @@ public class RoleController {
 
     @Autowired
     private EmployeRepository employeRepository;
+    @Autowired
+    private PointCollecteRepository pointCollecteRepository;
+    @Autowired
+    private TourneeRepository tourneeRepository;
+    @Autowired
+    private AlerteRepository alerteRepository;
 
     @GetMapping("/dashboard-info")
     public ResponseEntity<?> getDashboardInfo(Authentication authentication) {
@@ -43,22 +52,23 @@ public class RoleController {
             response.put("timestamp", java.time.LocalDateTime.now().toString());
 
             // Ajouter des informations spécifiques au rôle
-            String role = user.getRole();
+            String role = user.getRoleCode() != null ? user.getRoleCode() : user.getRole();
+            if (role != null) role = role.trim().toUpperCase().replace('-', '_').replace(' ', '_');
             if (role != null) {
                 switch (role) {
                     case "ADMIN":
                         response = addAdminInfo(response, user);
                         break;
-                    case "CHEF_EQUIPE":
+                    case "CHEF_EQUIPE", "CHEF":
                         response = addChefEquipeInfo(response, user);
                         break;
-                    case "AGENT_COLLECTE":
+                    case "AGENT_COLLECTE", "AGENT":
                         response = addAgentInfo(response, user);
                         break;
-                    case "CENTRE_TECHNIQUE":
+                    case "CENTRE_TECHNIQUE", "TECHNICIEN", "TECH":
                         response = addTechInfo(response, user);
                         break;
-                    case "RESPONSABLE_RECYCLAGE":
+                    case "RESPONSABLE_RECYCLAGE", "AGENT_TRI":
                         response = addRecyclageInfo(response, user);
                         break;
                     default:
@@ -79,15 +89,15 @@ public class RoleController {
         base.put("dashboardType", "ADMIN_GLOBAL");
         base.put("stats", Map.of(
                 "totalEmployes", employeRepository.count(),
-                "totalPointsCollecte", 156,
-                "totalTournees", 42,
-                "alertesActives", 7
+                "totalPointsCollecte", pointCollecteRepository.count(),
+                "totalTournees", tourneeRepository.count(),
+                "alertesActives", alerteRepository.countByTraiteeFalse()
         ));
         base.put("quickActions", Arrays.asList(
-                Map.of("label", "Gérer les employés", "icon", "👥", "url", "/admin/employes"),
-                Map.of("label", "Voir toutes les tournées", "icon", "📋", "url", "/admin/tournees"),
+                Map.of("label", "Gérer les employés", "icon", "👥", "url", "/employes/liste"),
+                Map.of("label", "Voir toutes les tournées", "icon", "📋", "url", "/tournees"),
                 Map.of("label", "Optimiser les tournées", "icon", "🚀", "url", "/optimisation"),
-                Map.of("label", "Statistiques globales", "icon", "📊", "url", "/admin/stats")
+                Map.of("label", "Statistiques globales", "icon", "📊", "url", "/dashboard")
         ));
         return base;
     }
@@ -96,9 +106,8 @@ public class RoleController {
         base.put("dashboardType", "CHEF_EQUIPE");
         base.put("quickActions", Arrays.asList(
                 Map.of("label", "Voir mon équipe", "icon", "👨‍💼", "url", "/chef/equipe"),
-                Map.of("label", "Mes tournées", "icon", "📅", "url", "/chef/tournees"),
-                Map.of("label", "Points critiques", "icon", "🚨", "url", "/chef/points"),
-                Map.of("label", "Affecter mission", "icon", "✅", "url", "/chef/affecter")
+                Map.of("label", "Alertes", "icon", "🚨", "url", "/chef/alertes"),
+                Map.of("label", "Optimisation", "icon", "✅", "url", "/optimisation")
         ));
         return base;
     }
@@ -107,9 +116,7 @@ public class RoleController {
         base.put("dashboardType", "AGENT_COLLECTE");
         base.put("quickActions", Arrays.asList(
                 Map.of("label", "Mes missions", "icon", "✅", "url", "/agent/missions"),
-                Map.of("label", "Rapporter incident", "icon", "⚠️", "url", "/agent/incident"),
-                Map.of("label", "Statut journalier", "icon", "📝", "url", "/agent/statut"),
-                Map.of("label", "Historique", "icon", "📋", "url", "/agent/historique")
+                Map.of("label", "Rapporter incident", "icon", "⚠️", "url", "/agent/missions")
         ));
         return base;
     }

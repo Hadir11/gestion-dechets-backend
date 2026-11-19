@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '../services/auth-service';
-import Link from 'next/link';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -33,24 +32,6 @@ export default function LoginPage() {
       setError(err.message || 'Nom d\'utilisateur ou mot de passe incorrect');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Remplissage automatique pour démonstration
-  const fillDemoCredentials = (type: 'admin' | 'agent' | 'chef') => {
-    switch(type) {
-      case 'admin':
-        setUsername('admin');
-        setPassword('admin123');
-        break;
-      case 'agent':
-        setUsername('agent');
-        setPassword('password123');
-        break;
-      case 'chef':
-        setUsername('chef');
-        setPassword('password123');
-        break;
     }
   };
 
@@ -145,12 +126,9 @@ export default function LoginPage() {
                     Se souvenir de moi
                   </label>
                 </div>
-                <Link
-                  href="/forgot-password"
-                  className="forgot-password"
-                >
-                  Mot de passe oublié ?
-                </Link>
+                <span className="forgot-password" title="Contactez un administrateur pour réinitialiser votre accès">
+                  Mot de passe oublié ? Contactez votre administrateur.
+                </span>
               </div>
 
               {/* Submit Button */}
@@ -179,53 +157,12 @@ export default function LoginPage() {
                 <span className="divider-text">Nouveau sur la plateforme ?</span>
               </div>
 
-              <div className="register-link-container">
-                <Link
-                  href="/register"
-                  className="register-link"
-                >
-                  <span className="register-icon">📝</span>
-                  <span>Créer un compte administrateur</span>
-                </Link>
-              </div>
+              <p className="register-link-container" role="note">
+                Le premier compte administrateur doit être créé avec le jeton de configuration du serveur.
+              </p>
             </div>
           </div>
 
-          {/* Card Footer - Demo Accounts */}
-          <div className="card-footer">
-            <div className="demo-accounts">
-              <p className="demo-title">Comptes de démonstration</p>
-
-              <div className="demo-buttons">
-                <button
-                  className="demo-button admin"
-                  onClick={() => fillDemoCredentials('admin')}
-                  type="button"
-                >
-                  <span className="demo-role">Administrateur</span>
-                  <span className="demo-credentials">admin / admin123</span>
-                </button>
-
-                <button
-                  className="demo-button agent"
-                  onClick={() => fillDemoCredentials('agent')}
-                  type="button"
-                >
-                  <span className="demo-role">Agent</span>
-                  <span className="demo-credentials">agent / password123</span>
-                </button>
-
-                <button
-                  className="demo-button chef"
-                  onClick={() => fillDemoCredentials('chef')}
-                  type="button"
-                >
-                  <span className="demo-role">Chef d'équipe</span>
-                  <span className="demo-credentials">chef / password123</span>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

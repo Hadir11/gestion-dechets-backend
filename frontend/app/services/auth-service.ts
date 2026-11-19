@@ -31,6 +31,7 @@ export interface AuthResponse {
 export interface User {
   username: string;
   role: string;
+  roleCode?: string;
   nom: string;
   prenom: string;
   email?: string;
@@ -133,7 +134,7 @@ class AuthService {
   // Récupérer le rôle
   getUserRole(): string | null {
     const user = this.getUser();
-    return user?.role ?? null;
+    return user?.roleCode ?? user?.role ?? null;
   }
 
   // Vérifier si connecté simplement
@@ -147,8 +148,14 @@ class AuthService {
 
     localStorage.setItem(this.tokenKey, token);
 
-    // Expiration dans 24 heures
-    const expiryTime = Date.now() + 24 * 60 * 60 * 1000;
+    let expiryTime = Date.now() + 24 * 60 * 60 * 1000;
+    try {
+      const payload = token.split('.')[1];
+      const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      if (typeof claims.exp === 'number') expiryTime = claims.exp * 1000;
+    } catch {
+      // Le serveur reste l'autorité sur la validité du jeton.
+    }
     localStorage.setItem(this.expiryKey, expiryTime.toString());
   }
 
@@ -159,6 +166,7 @@ class AuthService {
     const user: User = {
       username: data.username,
       role: data.role,
+      roleCode: data.roleCode,
       nom: data.nom,
       prenom: data.prenom,
       email: data.email,
@@ -386,23 +394,21 @@ getDefaultRoute(): string {
       console.log('getDefaultRoute: Redirection vers /admin/dashboard');
       return '/admin/dashboard';
 
-    case 'Chef d équipe':
-    case 'CHEF D ÉQUIPE':
+    case 'CHEF_EQUIPE':
+    case 'CHEF-EQUIPE':
       console.log('getDefaultRoute: Redirection vers /chef/equipe');
       return '/chef/equipe';
 
-    case 'Agent de collecte':
-    case 'AGENT DE COLLECTE':
+    case 'AGENT':
+    case 'AGENT_COLLECTE':
       console.log('getDefaultRoute: Redirection vers /agent/missions');
       return '/agent/missions';
 
-    case 'CENTRE_TECHNIQUE':
-      console.log('getDefaultRoute: Redirection vers /tech/vehicules');
-      return '/tech/vehicules';
-
+    case 'TECH':
+    case 'TECHNICIEN':
     case 'RESPONSABLE_RECYCLAGE':
-      console.log('getDefaultRoute: Redirection vers /recyclage/rapports');
-      return '/recyclage/rapports';
+    case 'AGENT_TRI':
+      return '/dashboard';
 
     default:
       console.log('getDefaultRoute: Rôle non reconnu, redirection vers /dashboard');
