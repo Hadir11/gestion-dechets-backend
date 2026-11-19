@@ -9,9 +9,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Vérifie que la normalisation des rôles est cohérente partout où elle est utilisée
- * (filtre JWT, tableaux de bord, contrôleurs). Une régression ici ouvrirait une
- * autorisation alors qu'elle était fermée, ou bloquerait un agent légitime.
+ * Les codes de rôle ont traîné partout dans le projet (AGENT_COLLECTE, AGENT,
+ * chef-equipe). Si cette normalisation casse, on ouvre une autorisation qui était
+ * fermée, ou on bloque un agent qui avait le droit de passer.
  */
 class EmployeAuthoritiesTest {
 

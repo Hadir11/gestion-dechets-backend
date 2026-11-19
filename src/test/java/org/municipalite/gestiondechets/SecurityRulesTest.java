@@ -39,9 +39,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Vérifie la matrice d'accès réelle, en passant par la chaîne de filtres Spring Security
- * et les jetons JWT signés. Ces tests remplacent les vérifications manuelles faites avec
- * curl : si quelqu'un rouvre une route par erreur, ils échouent.
+ * La matrice d'accès, testée pour de vrai : vraie chaîne de filtres, vrais jetons signés.
+ * Ça remplace les vérifications que je faisais à la main avec curl.
+ * Si quelqu'un rouvre une route sans y penser, le test tombe.
  */
 @WebMvcTest(controllers = {TestController.class, AgentController.class, TourneeController.class, AlerteController.class})
 @Import({SecurityConfig.class, CorsConfig.class, JwtAuthenticationFilter.class, JwtService.class})

@@ -27,12 +27,12 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Jeu de données de démonstration, chargé uniquement avec le profil {@code demo}.
- * Sans lui, un clone neuf démarre avec des tableaux de bord vides et une optimisation
- * qui répond « aucun point critique » : impossible de juger l'application.
+ * Remplit la base au démarrage, uniquement avec le profil {@code demo}.
  *
- * Le seed est idempotent : il ne fait rien si des employés existent déjà.
- * Les comptes créés utilisent tous le mot de passe {@code admin123} (démonstration locale).
+ * Sans ça, un clone neuf ouvre sur des tableaux de bord vides et une optimisation
+ * qui répond « aucun point critique » : on ne voit pas à quoi ressemble l'appli.
+ * Le seed ne fait rien si des employés existent déjà, et tous les comptes créés
+ * partagent le mot de passe {@code admin123}.
  */
 @Component
 @Profile("demo")

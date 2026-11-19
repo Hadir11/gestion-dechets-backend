@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Métadonnées de la documentation interactive, servie sur /swagger-ui.html.
- * Le schéma "bearer" permet de coller un JWT obtenu via /api/auth/login
- * et d'essayer les routes protégées depuis le navigateur.
+ * Titre et description de la doc interactive servie sur /swagger-ui.html.
+ * Le schéma "bearer" évite de recopier le jeton à la main dans chaque requête :
+ * on le colle une fois via « Authorize » et Swagger l'ajoute tout seul.
  */
 @Configuration
 public class OpenApiConfig {

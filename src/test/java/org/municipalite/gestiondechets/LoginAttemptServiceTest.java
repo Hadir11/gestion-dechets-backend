@@ -6,9 +6,8 @@ import org.municipalite.gestiondechets.service.LoginAttemptService;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Vérifie la limitation des tentatives de connexion : au-delà de cinq échecs,
- * l'identifiant est temporairement bloqué. Sans ce garde-fou, /api/auth/login
- * accepte un nombre illimité d'essais.
+ * Cinq échecs doivent bloquer, un succès doit remettre les compteurs à zéro.
+ * C'est facile à casser en touchant au service, d'où ces tests.
  */
 class LoginAttemptServiceTest {
 

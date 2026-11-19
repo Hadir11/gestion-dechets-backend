@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Limite les tentatives de connexion échouées, par identifiant.
+ * Compte les échecs de connexion par identifiant et bloque au bout de cinq.
  *
- * Sans cela, rien n'empêche d'essayer des milliers de mots de passe sur
- * /api/auth/login. Le compteur est en mémoire : il protège une instance unique
- * et se réinitialise au redémarrage. Pour plusieurs instances, il faudrait un
- * stockage partagé (Redis) — c'est un choix assumé pour ce projet.
+ * Sans ce garde-fou, /api/auth/login accepte autant d'essais qu'on veut.
+ * Le compteur vit en mémoire : ça protège une seule instance et ça repart de zéro
+ * au redémarrage. Avec plusieurs instances il faudrait un stockage partagé (Redis),
+ * ce n'est pas le cas ici.
  */
 @Component
 public class LoginAttemptService {
