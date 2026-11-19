@@ -482,30 +482,6 @@ getDefaultRoute(): string {
       localStorage.setItem(this.userKey, JSON.stringify(safeUser));
     }
   }
-
-  /**
-   * Rafraîchit le token (à implémenter si backend supporte refresh tokens)
-   */
-  async refreshToken(): Promise<boolean> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.token) {
-          this.setToken(data.token);
-          return true;
-        }
-      }
-    } catch (error) {
-      console.error('Erreur rafraîchissement token:', error);
-    }
-
-    return false;
-  }
 }
 
 export const authService = new AuthService();

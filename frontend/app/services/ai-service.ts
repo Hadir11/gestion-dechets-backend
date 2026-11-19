@@ -67,18 +67,3 @@ export async function predireRemplissageIA(pointId: string, heures: number = 6):
   }
 }
 
-export async function testerIA(): Promise<any> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/ia/test`);
-
-    if (!response.ok) {
-      throw new Error(`Erreur test IA: ${response.status}`);
-    }
-
-    return await response.json();
-
-  } catch (error) {
-    console.error('❌ Erreur test IA:', error);
-    throw error;
-  }
-}

@@ -90,9 +90,37 @@ Pour compiler le frontend : `npm run build`. Pour le lancer en mode production a
 
 Les contrôleurs documentent les opérations disponibles. Aucun contrat OpenAPI n’est actuellement fourni.
 
+## Tests
+
+```powershell
+mvn test
+```
+
+La suite couvre la normalisation des rôles et la matrice d’accès réelle, en passant par la chaîne de filtres Spring Security et des jetons JWT signés : requêtes anonymes refusées, jeton invalide rejeté, agent bloqué sur les tournées, admin bloqué sur l’endpoint agent, `/api/test/**` fermé, route inconnue en 404 une fois authentifié. Aucun test ne nécessite MongoDB.
+
 ## Déploiement
 
 Le profil `prod` exige `MONGODB_URI`, `JWT_SECRET` (au moins 32 octets aléatoires) et `CORS_ALLOWED_ORIGINS` (origines exactes, séparées par des virgules). Ne définissez `BOOTSTRAP_ADMIN_TOKEN` que pendant la création initiale du compte, puis retirez-le et redémarrez l’API. Utilisez HTTPS, un compte MongoDB aux privilèges minimaux et des secrets dédiés à chaque environnement.
+
+### Image Docker
+
+```powershell
+docker build -t gestion-dechets .
+docker run --rm -p 8080:8080 `
+  -e MONGODB_URI="mongodb+srv://…" `
+  -e JWT_SECRET="…" `
+  -e CORS_ALLOWED_ORIGINS="https://votre-frontend" `
+  gestion-dechets
+```
+
+L’image est multi-étapes (Maven puis JRE Alpine), tourne sous un utilisateur non privilégié et expose `/actuator/health` pour les sondes.
+
+### Render
+
+Le fichier [render.yaml](render.yaml) décrit le service web. MongoDB n’est pas fourni par Render : créez un cluster MongoDB Atlas, autorisez l’IP sortante de Render, puis renseignez `MONGODB_URI` et `CORS_ALLOWED_ORIGINS` lors du premier déploiement. `JWT_SECRET` est généré automatiquement.
+
+Le frontend se déploie séparément (Vercel ou équivalent) avec `NEXT_PUBLIC_API_BASE_URL` pointant vers l’URL publique de l’API, suffixée de `/api`.
+
 
 ## État du projet
 

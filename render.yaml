@@ -1,0 +1,23 @@
+# Blueprint Render pour l'API Spring Boot.
+# MongoDB n'est pas fourni par Render : utilisez un cluster MongoDB Atlas
+# et collez son URI dans MONGODB_URI lors du premier déploiement.
+
+services:
+  - type: web
+    name: gestion-dechets-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: gestion-dechet
+      # Origine exacte du frontend déployé, sans slash final.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
