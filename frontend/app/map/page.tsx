@@ -42,10 +42,8 @@ export default function MapPage() {
 
   // ========== CHARGEMENT DES DONNÉES ==========
   const loadDataFromSpringBoot = async () => {
-    console.log('🚀 Chargement des données Spring Boot...');
 
     if (!authService.isAuthenticated()) {
-      console.log('❌ Non authentifié');
       setConnectionStatus('failed');
       return;
     }
@@ -55,19 +53,16 @@ export default function MapPage() {
 
     try {
       const points = await fetchWastePoints();
-      console.log('📦 Résultat fetch:', points);
 
       if (!points) {
         setConnectionStatus('failed');
         setWastePoints([]);
-        console.log('❌ Aucune donnée de Spring Boot');
         return;
       }
 
       if (points.length === 0) {
         setConnectionStatus('connected');
         setWastePoints([]);
-        console.log('ℹ️ Spring Boot connecté mais collection vide');
         setStats({ total: 0, critical: 0, averageLevel: 0 });
         return;
       }
@@ -83,7 +78,6 @@ export default function MapPage() {
 
       setStats({ total, critical, averageLevel });
 
-      console.log(`🎉 ${points.length} points chargés !`);
 
     } catch (error) {
       console.error('💥 Erreur:', error);
@@ -150,6 +144,8 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current || wastePoints.length === 0) return;
 
+    // Import paresseux : leaflet touche a window au chargement et casse le rendu serveur.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const L = require('leaflet');
     const map = mapRef.current;
 

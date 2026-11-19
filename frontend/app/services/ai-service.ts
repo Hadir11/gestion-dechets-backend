@@ -28,7 +28,6 @@ export async function optimiserAvecIA(zoneId: string): Promise<{
   tournees_generes: number;
 }> {
   try {
-    console.log(`🧠 Appel IA pour la zone: ${zoneId}`);
 
     const response = await fetch(`${API_BASE_URL}/ia/optimiser?zoneId=${zoneId}`, {
       method: 'POST',
@@ -42,7 +41,6 @@ export async function optimiserAvecIA(zoneId: string): Promise<{
     }
 
     const data = await response.json();
-    console.log('✅ Réponse IA:', data);
     return data;
 
   } catch (error) {

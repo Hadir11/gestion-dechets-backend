@@ -18,11 +18,10 @@ export default function LoginPage() {
 
     try {
       // 1. Se connecter
-      const userData = await authService.login({ username, password });
+      await authService.login({ username, password });
 
       // 2. Récupérer la route par défaut selon le rôle
       const defaultRoute = authService.getDefaultRoute();
-      console.log('Redirection vers:', defaultRoute);
 
       // 3. Rediriger
       router.push(defaultRoute);

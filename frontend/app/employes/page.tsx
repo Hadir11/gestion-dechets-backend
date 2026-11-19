@@ -202,7 +202,7 @@ export default function NewEmployePage() {
   const selectedRole = roles.find(r => r.value === formData.role);
 
   return (
-
+    <AuthGuard>
       <div style={{
         minHeight: '100vh',
         backgroundColor: '#f0f9ff',
@@ -930,7 +930,7 @@ export default function NewEmployePage() {
           }
         `}</style>
       </div>
-
+    </AuthGuard>
   );
 
 }

@@ -76,6 +76,8 @@ Dix-neuf tests, aucun n'a besoin de MongoDB, donc ils passent sur un clone vide.
 
 Il y a aussi des tests sur la normalisation des rôles et sur la limitation des tentatives de connexion.
 
+Côté interface, `npm test` lance cinq tests Vitest sur la redirection après connexion. Le libellé du rôle a changé plusieurs fois dans l'API, et une erreur à cet endroit envoie l'utilisateur sur la page d'un autre. `npm run lint` passe ESLint, avec zéro erreur. Les deux tournent en CI.
+
 ## L'API
 
 Une fois l'API démarrée, la documentation est sur http://localhost:18081/swagger-ui.html. On se connecte avec `/api/auth/login`, puis le bouton « Authorize » permet d'envoyer le jeton et d'essayer les routes protégées. Le contrat brut est sur `/v3/api-docs`.
@@ -104,7 +106,6 @@ Le détail des étapes, Atlas compris, est dans [docs/DEPLOIEMENT.md](docs/DEPLO
 
 Autant le dire plutôt que de le laisser découvrir.
 
-- Le frontend n'a ni tests ni lint. La CI ne vérifie que la compilation TypeScript.
 - Il n'y a pas de jeton de rafraîchissement. Quand le jeton expire, il faut se reconnecter.
 - Les listes ne sont pas paginées.
 - Les fonctions dites « IA » (prédiction de remplissage, détection d'anomalies) sont des heuristiques maquillées, pas des modèles entraînés. Elles sont là pour la démonstration.

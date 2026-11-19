@@ -380,28 +380,22 @@ class AuthService {
 getDefaultRoute(): string {
   const userRole = this.getUserRole();
   if (!userRole) {
-    console.log('getDefaultRoute: Pas de rôle utilisateur');
     return '/login';
   }
 
-  console.log('getDefaultRoute: Rôle détecté =', userRole);
   const userRoleUpper = userRole.toUpperCase();
-  console.log('getDefaultRoute: Rôle en majuscules =', userRoleUpper);
 
   switch(userRoleUpper) {
     case 'ADMIN':
     case 'ADMINISTRATEUR':
-      console.log('getDefaultRoute: Redirection vers /admin/dashboard');
       return '/admin/dashboard';
 
     case 'CHEF_EQUIPE':
     case 'CHEF-EQUIPE':
-      console.log('getDefaultRoute: Redirection vers /chef/equipe');
       return '/chef/equipe';
 
     case 'AGENT':
     case 'AGENT_COLLECTE':
-      console.log('getDefaultRoute: Redirection vers /agent/missions');
       return '/agent/missions';
 
     case 'TECH':
@@ -411,7 +405,6 @@ getDefaultRoute(): string {
       return '/dashboard';
 
     default:
-      console.log('getDefaultRoute: Rôle non reconnu, redirection vers /dashboard');
       return '/dashboard';
   }
 

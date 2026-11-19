@@ -22,7 +22,6 @@ export interface WastePoint {
  */
 export async function fetchWastePoints(): Promise<WastePoint[] | null> {
   try {
-    console.log('🔄 Connexion à Spring Boot avec authentification...');
 
     if (!authService.isAuthenticated()) {
       console.error('❌ Non authentifié, redirection vers login');
@@ -59,7 +58,6 @@ export async function fetchWastePoints(): Promise<WastePoint[] | null> {
       return null;
     }
 
-    console.log(`✅ ${data.length} points chargés`);
     return data;
 
   } catch (error) {
