@@ -7,6 +7,8 @@ Une application pour organiser la collecte des déchets dans une commune. Il y a
 
 Le sujet m'a plu parce qu'il y a un vrai problème derrière. Avec un seul camion et une matinée devant soi, il faut décider quels conteneurs ramasser d'abord, et ce n'est pas évident quand on en a huit répartis dans trois quartiers.
 
+Une maquette de l'interface est visible en ligne, sans rien installer : <https://hadir11.github.io/gestion-dechets-backend/maquette-eco-collecte.html>. Elle tourne sur des données fictives. C'est un aperçu de l'écran, pas l'application connectée.
+
 ![Tableau de bord administrateur](docs/dashboard-admin.png)
 
 ## Ce que fait l'application
@@ -15,9 +17,9 @@ L'administrateur gère les comptes, les employés, les véhicules et les zones. 
 
 Les alertes ont une vraie vie : on peut les traiter, les escalader, les ignorer, les assigner à une équipe, envoyer une instruction ou replanifier la tournée concernée.
 
-| Chef d'équipe | Agent |
-| :---: | :---: |
-| ![Alertes](docs/alertes-chef.png) | ![Missions](docs/missions-agent.png) |
+| Chef d'équipe | Agent | Tournées |
+| :---: | :---: | :---: |
+| ![Alertes](docs/alertes-chef.png) | ![Missions](docs/missions-agent.png) | ![Tournées](docs/tournees-admin.png) |
 
 ## L'optimisation des tournées
 
