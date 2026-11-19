@@ -5,6 +5,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=springboot&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-5.0-47A248?logo=mongodb&logoColor=white)
+![Licence](https://img.shields.io/badge/licence-MIT-3DA639)
 
 API REST et interface web pour piloter la collecte des déchets d’une municipalité : points de collecte, alertes de remplissage, équipes, véhicules et tournées optimisées.
 
@@ -13,6 +14,8 @@ Le projet est traité comme une application réelle, pas comme un exercice : aut
 ---
 
 ## Aperçu
+
+**Aperçu en ligne** (maquette statique, sans installation) : <https://hadir11.github.io/gestion-dechets-backend/maquette-eco-collecte.html>
 
 | Tableau de bord administrateur | Alertes du chef d’équipe |
 | :---: | :---: |
@@ -43,9 +46,11 @@ L’optimisation prend les points au-dessus de 70 % de remplissage, calcule le m
 - **Aucune fuite dans les réponses** : `password`, `authorities` et les getters internes de `UserDetails` sont exclus de la sérialisation JSON.
 - **CORS explicite** : origine unique configurable, cookies inter-origines désactivés, requêtes d’origine inconnue rejetées.
 
+- **Limitation des tentatives** : cinq échecs par identifiant bloquent la connexion pendant quinze minutes et renvoient un 429 ; une connexion réussie remet le compteur à zéro.
+
 ### Qualité et outillage
 
-- **15 tests automatisés** qui ne dépendent pas de MongoDB : la matrice d’accès est vérifiée à travers la vraie chaîne de filtres Spring Security, avec des jetons signés.
+- **20 tests automatisés** qui ne dépendent pas de MongoDB : la matrice d’accès est vérifiée à travers la vraie chaîne de filtres Spring Security, avec des jetons signés.
 - **CI GitHub Actions** sur chaque push et chaque pull request : `mvn verify` et `npm run build`.
 - **Documentation OpenAPI** servie par Swagger UI, schéma `bearer` inclus pour essayer les routes protégées depuis le navigateur.
 - **Build Docker multi-étapes**, image JRE Alpine, utilisateur non privilégié, sonde de santé `/actuator/health`.
@@ -146,6 +151,7 @@ mvn test
 | Suite | Couverture |
 | --- | --- |
 | `EmployeAuthoritiesTest` | Normalisation des rôles, rôle absent, absence de `password` et `authorities` dans le JSON |
+| `LoginAttemptServiceTest` | Cinq échecs bloquent un identifiant, un succès le débloque, les comptes restent indépendants |
 | `SecurityRulesTest` | Chaîne de filtres réelle : anonyme et jeton invalide rejetés, agent bloqué sur les tournées, admin bloqué sur l’endpoint agent, `/api/test/**` fermé, route inconnue en 404, création d’alerte en 201 |
 
 Aucun test ne nécessite MongoDB : `mvn test` passe sur un clone vierge. La CI rejoue ces tests et le build frontend à chaque push sur `main` et sur chaque pull request.
@@ -179,11 +185,14 @@ Un projet de portfolio gagne à dire ce qu’il ne fait pas encore :
 
 - Pas de tests côté frontend ni de lint configuré ; la CI ne vérifie que la compilation TypeScript.
 - Pas de jeton de rafraîchissement : à l’expiration, il faut se reconnecter.
-- Pas de pagination sur les listes, ni de limitation du débit sur `POST /api/auth/login`.
+- Pas de pagination sur les listes.
 - Les fonctions dites « IA » (prédiction de remplissage, anomalies) sont des heuristiques, pas des modèles entraînés.
-- Aucune licence n’est encore attachée au dépôt.
 
 ---
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE). Le code peut être réutilisé, modifié et redistribué en conservant l’avis de copyright.
 
 ## État du projet
 

@@ -21,19 +21,31 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private org.municipalite.gestiondechets.service.LoginAttemptService loginAttemptService;
+
     @Value("${security.bootstrap-token:}")
     private String bootstrapToken;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        String username = credentials.get("username");
+
+        if (loginAttemptService.isBlocked(username)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "success", false,
+                    "message", "Trop de tentatives échouées. Réessayez dans quelques minutes."
+            ));
+        }
+
         try {
-            String username = credentials.get("username");
             String password = credentials.get("password");
 
             String token = authService.login(username, password);
 
             // Récupère l'employé pour les infos supplémentaires
             Employe employe = authService.getEmployeByUsername(username);
+            loginAttemptService.loginSucceeded(username);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -49,6 +61,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+            loginAttemptService.loginFailed(username);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "Identifiant ou mot de passe invalide"
