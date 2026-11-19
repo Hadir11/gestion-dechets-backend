@@ -1,5 +1,7 @@
 # Gestion municipale des déchets
 
+[![CI](https://github.com/Hadir11/gestion-dechets-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/Hadir11/gestion-dechets-backend/actions/workflows/ci.yml)
+
 API REST de démonstration pour organiser la collecte des déchets à l’échelle d’une municipalité. Le backend est construit avec Spring Boot, Java 17 et MongoDB.
 
 > **État de sécurité :** l’API exige un jeton JWT valide, limite les écritures aux rôles autorisés, ne permet la création d’employés qu’à un administrateur et n’accepte plus d’inscriptions publiques. Avant un déploiement réel, configurez les secrets et domaines autorisés, puis exécutez les vérifications locales ci-dessous.
