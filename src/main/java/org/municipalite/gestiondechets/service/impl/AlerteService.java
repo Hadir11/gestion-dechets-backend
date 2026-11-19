@@ -41,6 +41,11 @@ public class AlerteService {
         return alerteRepository.save(alerte);
     }
 
+    // Liste complète des alertes (tous états confondus)
+    public List<Alerte> getAllAlertes() {
+        return alerteRepository.findAll();
+    }
+
     // Liste des alertes urgentes non traitées
     public List<Alerte> getAlertesUrgentes() {
         List<String> typesUrgents = Arrays.asList(

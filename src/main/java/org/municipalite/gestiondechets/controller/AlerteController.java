@@ -33,6 +33,12 @@ public class AlerteController {
         }
     }
 
+    // 0️⃣ Liste complète des alertes
+    @GetMapping
+    public List<Alerte> getAllAlertes() {
+        return alerteService.getAllAlertes();
+    }
+
     // 1️⃣ Liste alertes urgentes
     @GetMapping("/urgentes")
     public List<Alerte> getAlertesUrgentes() {

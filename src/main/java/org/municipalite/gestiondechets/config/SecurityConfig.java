@@ -37,6 +37,7 @@ public class SecurityConfig {
                         // est réécrit en 401 et le client ne peut plus distinguer les deux cas.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/bootstrap-admin").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/test").permitAll()

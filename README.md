@@ -38,9 +38,23 @@ Lancez MongoDB, puis démarrez l’application depuis la racine du projet :
 mvn spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-Pour lancer la vérification Maven : `mvn test`. Le projet doit encore recevoir une suite de tests métier et de sécurité ; la compilation seule ne garantit pas le bon fonctionnement de tous les parcours.
+Pour lancer la vérification Maven : `mvn test` (voir la section Tests plus bas).
 
 En local, l’API écoute par défaut sur `http://localhost:18081`, comme configuré dans `.env.example` du frontend. Les routes sont préfixées par `/api` ; la connexion est disponible sous `/api/auth/login`. Les routes métier exigent `Authorization: Bearer <jeton>`.
+
+### Données de démonstration
+
+Sur une base vide, l’application démarre sans aucune donnée : tableaux de bord à zéro et optimisation qui répond « aucun point critique ». Le profil `demo` charge un jeu complet (3 zones, 8 points de collecte, 6 employés, 3 véhicules, une équipe, 3 alertes, une tournée) :
+
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.profiles=local,demo"
+```
+
+Le chargement est idempotent : il ne fait rien si des employés existent déjà. Les comptes créés partagent le mot de passe `admin123` (`admin`, `chef`, `agent`, `agent2`…). Ce profil est réservé à la démonstration locale, ne l’activez jamais en production.
+
+### Documentation interactive
+
+Une fois l’API démarrée : [http://localhost:18081/swagger-ui.html](http://localhost:18081/swagger-ui.html). Toutes les routes y sont décrites ; connectez-vous avec `/api/auth/login`, puis « Authorize » pour envoyer le jeton Bearer. Le contrat brut est disponible sur `/v3/api-docs`.
 
 ### Création initiale de l’administrateur
 
