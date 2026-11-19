@@ -14,6 +14,12 @@ Le projet est traité comme une application réelle, pas comme un exercice : aut
 
 ## Aperçu
 
+| Tableau de bord administrateur | Alertes du chef d’équipe |
+| :---: | :---: |
+| ![Tableau de bord administrateur](docs/dashboard-admin.png) | ![Alertes du chef d'équipe](docs/alertes-chef.png) |
+| **Missions de l’agent de collecte** | **Tournées planifiées** |
+| ![Missions de l'agent](docs/missions-agent.png) | ![Tournées](docs/tournees-admin.png) |
+
 Trois rôles, trois expériences :
 
 | Rôle | Ce qu’il voit | Ce qu’il peut faire |

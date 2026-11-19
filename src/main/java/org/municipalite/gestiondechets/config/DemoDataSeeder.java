@@ -127,17 +127,23 @@ public class DemoDataSeeder implements CommandLineRunner {
                 alerte(points.get(1), 85, "Surcharge zone", "Débordement signalé par un riverain", false),
                 alerte(points.get(5), 88, "Conteneur endommagé", "Couvercle cassé", true)));
 
+        // La tournée doit rester « planifiée » : la tâche d'auto-libération des véhicules
+        // passe les tournées en TERMINÉE dès que leur heure de fin est dépassée, ce qui
+        // viderait l'écran de l'agent quelques minutes après le démarrage.
+        LocalDateTime depart = LocalDateTime.now().plusMinutes(30);
+        LocalDateTime fin = depart.plusHours(2);
+
         tourneeRepository.save(Tournee.builder()
-                .date(LocalDate.now())
-                .heureDepart(LocalTime.of(8, 0))
-                .heureFinEstimee(LocalTime.of(10, 30))
-                .dateHeureFinEstimee(LocalDateTime.now().withHour(10).withMinute(30))
+                .date(depart.toLocalDate())
+                .heureDepart(depart.toLocalTime())
+                .heureFinEstimee(fin.toLocalTime())
+                .dateHeureFinEstimee(fin)
                 .zone(centre)
                 .status("PLANIFIÉE")
                 .employe(agent)
                 .vehicule(camion)
                 .pointsCollecte(List.of(points.get(2), points.get(3)))
-                .dureeEstimee(150)
+                .dureeEstimee(120)
                 .distanceEstimee(11.4)
                 .build());
 

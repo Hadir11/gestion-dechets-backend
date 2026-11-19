@@ -20,7 +20,7 @@ interface TourneeApi {
   date?: string;
   status?: string;
   employe?: { username?: string } | string | null;
-  vehicule?: { immatriculation?: string; marque?: string; modele?: string } | string | null;
+  vehicule?: { matricule?: string; typeVehicule?: string } | string | null;
   pointsCollecte?: Array<{
     _id?: string;
     id?: string;
@@ -104,7 +104,7 @@ export default function AgentMissionsPage() {
 
       const vehicle = typeof assignedTournee.vehicule === 'string'
         ? assignedTournee.vehicule
-        : [assignedTournee.vehicule?.marque, assignedTournee.vehicule?.modele, assignedTournee.vehicule?.immatriculation]
+        : [assignedTournee.vehicule?.typeVehicule, assignedTournee.vehicule?.matricule]
           .filter(Boolean)
           .join(' • ');
       const missionDate = assignedTournee.date
@@ -392,190 +392,301 @@ export default function AgentMissionsPage() {
         {/* CSS avec ajout du spinner mini */}
         <style jsx>{`
           .agent-missions-container {
-            min-height: 100vh;
-            padding: 20px;
             position: relative;
-            background: linear-gradient(135deg, #f0f9ff 0%, #f0fff4 100%);
-            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 32px 24px 64px;
+            background: linear-gradient(135deg, #f2fbf6 0%, #f7fbff 100%);
+            overflow: hidden;
           }
-
           .background-circle {
-            position: fixed;
+            position: absolute;
             border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.32;
             pointer-events: none;
           }
-
-          .background-circle.top-right {
-            top: -200px;
-            right: -200px;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-          }
-
-          .background-circle.bottom-left {
-            bottom: -200px;
-            left: -200px;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
-          }
-
+          .top-right { width: 380px; height: 380px; top: -150px; right: -120px; background: #b7f0d4; }
+          .bottom-left { width: 420px; height: 420px; bottom: -190px; left: -160px; background: #cfe4ff; }
           .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
             position: relative;
-            z-index: 1;
-          }
-
-          /* Header */
-          .page-header {
+            max-width: 1100px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 24px;
           }
 
-          @media (min-width: 768px) {
-            .page-header {
-              flex-direction: row;
-              align-items: center;
-              justify-content: space-between;
-            }
+          .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
           }
-
-          .header-left {
-            flex: 1;
-          }
-
-          .page-title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #1f2937;
-            margin: 0 0 8px 0;
-          }
-
-          .page-subtitle {
-            color: #6b7280;
-            font-size: 16px;
-            margin: 0;
-          }
+          .page-title { margin: 0 0 6px; font-size: 30px; font-weight: 800; color: #0f172a; }
+          .page-subtitle { margin: 0; font-size: 15px; color: #64748b; }
+          .header-right { display: flex; align-items: center; gap: 12px; }
 
           .alerte-btn {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 18px;
+            border: 0;
             border-radius: 12px;
-            padding: 12px 24px;
-            font-weight: 500;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+          }
+          .alerte-btn:hover { filter: brightness(1.05); }
+          .alerte-icon { font-size: 18px; }
+
+          .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding: 64px 0;
+            color: #64748b;
+          }
+          .spinner {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 3px solid #d8e6f5;
+            border-top-color: #2563eb;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin { to { transform: rotate(360deg); } }
+
+          .empty-state {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 64px 24px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+          }
+          .empty-icon { font-size: 34px; margin-bottom: 10px; }
+          .empty-state h3 { margin: 0 0 6px; font-size: 18px; color: #0f172a; }
+          .empty-state p { margin: 0 0 18px; color: #64748b; }
+
+          .current-mission-card,
+          .action-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+          }
+          .card-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 22px;
+            background: #fff7f7;
+            border-bottom: 1px solid #f6e7e7;
+          }
+          .card-header h2 { margin: 0; font-size: 18px; color: #0f172a; }
+          .card-header h3 { margin: 0; font-size: 16px; color: #0f172a; }
+          .status-badge {
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #fffbeb;
+            color: #b45309;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
           }
 
-          .alerte-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
+          .mission-content {
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+          }
+          .vehicle-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: 12px;
+          }
+          .vehicle-icon { font-size: 26px; }
+          .vehicle-name { font-weight: 700; color: #0f172a; }
+          .vehicle-details { margin-top: 2px; font-size: 14px; color: #64748b; }
+
+          .collection-points h3 { margin: 0 0 12px; font-size: 15px; color: #334155; }
+          .points-list { display: flex; flex-direction: column; gap: 12px; }
+          .point-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+          }
+          .point-info { flex: 1; min-width: 0; }
+          .point-name { margin-bottom: 4px; font-weight: 600; color: #0f172a; }
+          .point-details {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #64748b;
+          }
+          .point-adresse { white-space: nowrap; }
+          .point-niveau { display: inline-flex; align-items: center; gap: 8px; }
+          .mini-progress {
+            width: 90px;
+            height: 6px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+          }
+          .mini-progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #34d399, #10b981);
           }
 
-          .alerte-icon {
-            font-size: 20px;
+          .collect-btn {
+            padding: 9px 14px;
+            border: 1px solid #d1fae5;
+            border-radius: 10px;
+            background: #ecfdf5;
+            color: #047857;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
           }
+          .collect-btn:hover { background: #d1fae5; }
 
-          /* Loading State */
-          .loading-state {
-            padding: 60px 20px;
-            text-align: center;
+          .report-textarea {
+            display: block;
+            width: calc(100% - 44px);
+            margin: 18px 22px 14px;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #0f172a;
+            resize: vertical;
+            min-height: 92px;
           }
-
-          .loading-state .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e5e7eb;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            animation: spin 1s linear infinite;
+          .submit-btn {
+            margin: 0 22px 20px;
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 10px;
+            background: #059669;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
           }
+          .submit-btn:hover { background: #047857; }
 
-          .loading-state p {
-            color: #6b7280;
-            margin: 0;
+          .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.55);
           }
-
-          /* Spinner mini */
+          .modal-content {
+            width: min(560px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+          }
+          .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 22px;
+            border-bottom: 1px solid #eef2f7;
+          }
+          .modal-header h2 { margin: 0; font-size: 18px; color: #0f172a; }
+          .close-btn {
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+          }
+          .modal-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; }
+          .modal-form { display: flex; flex-direction: column; gap: 16px; }
+          .form-group { display: flex; flex-direction: column; gap: 6px; }
+          .form-group label { font-size: 13px; font-weight: 600; color: #334155; }
+          .problem-select,
+          .point-select,
+          .alert-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            color: #0f172a;
+          }
+          .alert-textarea { min-height: 92px; resize: vertical; }
+          .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 8px 22px 22px;
+          }
+          .cancel-btn {
+            padding: 10px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            color: #475569;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+          }
+          .confirm-btn {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 10px;
+            background: #dc2626;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+          }
+          .confirm-btn:disabled { opacity: 0.6; cursor: default; }
           .spinner-mini {
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            vertical-align: -1px;
             border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            border-top-color: #fff;
             animation: spin 1s linear infinite;
-            margin-right: 8px;
-          }
-
-          /* Modal improvements */
-          .modal-content {
-            max-height: 90vh;
-            overflow-y: auto;
-          }
-
-          .confirm-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          .confirm-btn:not(:disabled):hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-          }
-
-          /* Garder tout le reste du CSS inchangé */
-          /* ... (garder tout le CSS précédent) ... */
-
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-
-          /* Responsive */
-          @media (max-width: 768px) {
-            .agent-missions-container {
-              padding: 16px;
-            }
-
-            .page-title {
-              font-size: 24px;
-            }
-
-            .page-subtitle {
-              font-size: 14px;
-            }
-
-            .point-item {
-              flex-direction: column;
-              gap: 12px;
-              text-align: center;
-            }
-
-            .collect-btn {
-              width: 100%;
-            }
-
-            .report-textarea,
-            .submit-btn {
-              margin: 16px;
-              width: calc(100% - 32px);
-            }
-
-            .modal-content {
-              width: 95%;
-              margin: 16px;
-              max-height: 85vh;
-            }
           }
         `}</style>
       </div>
