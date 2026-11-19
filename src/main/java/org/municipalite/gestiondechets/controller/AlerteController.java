@@ -27,7 +27,7 @@ public class AlerteController {
                     request.getMessage(),
                     request.getNiveauRemplissage()
             );
-            return ResponseEntity.ok(alerte);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(alerte);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
         }

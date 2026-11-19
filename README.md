@@ -124,6 +124,9 @@ Le fichier [render.yaml](render.yaml) décrit le service web. MongoDB n’est pa
 
 Le frontend se déploie séparément (Vercel ou équivalent) avec `NEXT_PUBLIC_API_BASE_URL` pointant vers l’URL publique de l’API, suffixée de `/api`.
 
+Le déroulé complet, étape par étape (Atlas, Render, Vercel, création du premier administrateur, vérifications), est décrit dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
+
+
 
 ## État du projet
 
