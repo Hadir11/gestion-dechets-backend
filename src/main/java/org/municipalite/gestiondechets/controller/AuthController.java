@@ -112,14 +112,4 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
     }
-
-    // Endpoint de test
-    @GetMapping("/test")
-    public ResponseEntity<?> test() {
-        return ResponseEntity.ok(Map.of(
-                "status", "OK",
-                "message", "API fonctionne",
-                "timestamp", System.currentTimeMillis()
-        ));
-    }
 }

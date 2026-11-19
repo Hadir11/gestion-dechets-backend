@@ -70,7 +70,7 @@ On appelle ensuite `POST /api/auth/bootstrap-admin` avec l'en-tête `X-Bootstrap
 mvn test
 ```
 
-Vingt tests, aucun n'a besoin de MongoDB, donc ils passent sur un clone vide. Les plus utiles sont ceux de `SecurityRulesTest` : ils passent par la vraie chaîne de filtres Spring Security avec des jetons signés, et vérifient la matrice d'accès complète. Si quelqu'un rouvre une route par erreur, la CI le dit.
+Dix-neuf tests, aucun n'a besoin de MongoDB, donc ils passent sur un clone vide. Les plus utiles sont ceux de `SecurityRulesTest` : ils passent par la vraie chaîne de filtres Spring Security avec des jetons signés, et vérifient la matrice d'accès complète. Si quelqu'un rouvre une route par erreur, la CI le dit.
 
 Il y a aussi des tests sur la normalisation des rôles et sur la limitation des tentatives de connexion.
 

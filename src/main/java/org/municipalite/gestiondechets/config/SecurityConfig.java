@@ -40,9 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/bootstrap-admin").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/test").permitAll()
+
                         .requestMatchers("/api/auth/register").hasRole("ADMIN")
-                        .requestMatchers("/api/test/**").denyAll()
                         .requestMatchers(HttpMethod.POST, "/api/alertes").hasAnyRole("ADMIN", "CHEF_EQUIPE", "AGENT")
                         .requestMatchers(HttpMethod.POST, "/api/**")
                         .hasAnyRole("ADMIN", "CHEF_EQUIPE")

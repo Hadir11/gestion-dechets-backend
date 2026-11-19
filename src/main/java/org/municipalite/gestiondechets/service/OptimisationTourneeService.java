@@ -5,6 +5,7 @@ import org.municipalite.gestiondechets.model.*;
 import org.municipalite.gestiondechets.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class OptimisationTourneeService {
 
@@ -21,8 +23,6 @@ public class OptimisationTourneeService {
     @Autowired private EmployeRepository employeRepo;
 
     public List<Tournee> genererTourneesOptimisees() {
-        System.out.println("⚡ GÉNÉRATION TOURNÉE SANS ZONE - " + LocalDateTime.now());
-
         // 1. Récupérer tous les points critiques (> 70%)
         List<PointCollecte> pointsCritiques = pointCollecteRepo
                 .findByNiveauRemplissageGreaterThan(70);
@@ -43,10 +43,9 @@ public class OptimisationTourneeService {
         // 4. Créer la tournée
         Tournee tournee = creerTournee(vehicule, cheminOptimise);
 
-        System.out.println("✅ Tournée générée avec " + cheminOptimise.size() + " points");
-        System.out.println("📏 Distance: " + tournee.getDistanceEstimee() + " km");
-        System.out.println("⏱️ Durée: " + tournee.getDureeEstimee() + " min");
-        System.out.println("🕐 Heure fin estimée: " + tournee.getHeureFinEstimee());
+        log.info("Tournée générée : {} points, {} km, {} min, fin estimée {}",
+                cheminOptimise.size(), tournee.getDistanceEstimee(),
+                tournee.getDureeEstimee(), tournee.getHeureFinEstimee());
 
         return Arrays.asList(tournee);
     }
@@ -100,8 +99,6 @@ public class OptimisationTourneeService {
                 .max(Comparator.comparingInt(PointCollecte::getNiveauRemplissage))
                 .orElse(points.get(0));
 
-        System.out.println("🎯 Point de départ: " + courant.getAdresse() +
-                " (" + courant.getNiveauRemplissage() + "%)");
 
         // Calculer chemin du dépôt au premier point
         ResultatDijkstra resultat = Dijkstra.calculerCheminPlusCourt(
@@ -109,8 +106,8 @@ public class OptimisationTourneeService {
         );
 
         if (resultat.cheminTrouve()) {
-            System.out.println("📐 Distance dépôt→premier point: " +
-                    String.format("%.2f", resultat.getDistanceTotale()) + " km");
+            log.debug("Distance dépôt → premier point : {} km",
+                    String.format("%.2f", resultat.getDistanceTotale()));
         }
 
         chemin.add(courant);
@@ -125,7 +122,6 @@ public class OptimisationTourneeService {
             visites.add(suivant.get_id());
             courant = suivant;
 
-            System.out.println("➡️ Point suivant: " + suivant.getAdresse());
         }
 
         return chemin;
@@ -190,8 +186,6 @@ public class OptimisationTourneeService {
         vehicule.setDisponible(false);
         vehiculeRepo.save(vehicule);
 
-        System.out.println("🚗 Véhicule " + vehicule.getMatricule() + " marqué comme indisponible");
-        System.out.println("🕐 Véhicule sera libéré automatiquement à: " + dateHeureFinEstimee);
 
         return tourneeRepo.save(tournee);
     }

@@ -1,6 +1,6 @@
-// AutoLiberationService.java - CRÉEZ CE FICHIER
 package org.municipalite.gestiondechets.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.municipalite.gestiondechets.model.Tournee;
 import org.municipalite.gestiondechets.model.Vehicule;
 import org.municipalite.gestiondechets.repository.TourneeRepository;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 public class AutoLiberationService {
 
@@ -22,14 +23,11 @@ public class AutoLiberationService {
     private VehiculeRepository vehiculeRepository;
 
     /**
-     * Vérifie toutes les minutes si une tournée est terminée
-     * et libère son véhicule automatiquement
+     * Toutes les minutes, passe en TERMINÉE les tournées dont l'heure de fin estimée
+     * est dépassée, et remet leur véhicule à disposition.
      */
-    @Scheduled(fixedRate = 60000) // Toutes les 60 secondes
+    @Scheduled(fixedRate = 60000)
     public void libererVehiculesTourneesTerminees() {
-        System.out.println("⏰ Vérification auto libération véhicules...");
-
-        // Récupérer toutes les tournées PLANIFIÉES avec date de fin estimée dépassée
         List<Tournee> tournees = tourneeRepository.findByStatus("PLANIFIÉE");
 
         int vehiculesLiberes = 0;
@@ -39,47 +37,38 @@ public class AutoLiberationService {
                     tournee.getDateHeureFinEstimee() != null &&
                     LocalDateTime.now().isAfter(tournee.getDateHeureFinEstimee())) {
 
-                // Marquer la tournée comme TERMINÉE
                 tournee.setStatus("TERMINÉE");
                 tourneeRepository.save(tournee);
 
-                // Libérer le véhicule
                 Vehicule vehicule = tournee.getVehicule();
                 vehicule.setDisponible(true);
                 vehiculeRepository.save(vehicule);
 
                 vehiculesLiberes++;
-
-                System.out.println("✅ Véhicule auto-libéré: " + vehicule.getMatricule() +
-                        " - Tournée: " + tournee.get_id());
+                log.info("Tournée {} terminée, véhicule {} libéré", tournee.get_id(), vehicule.getMatricule());
             }
         }
 
         if (vehiculesLiberes > 0) {
-            System.out.println("🎉 " + vehiculesLiberes + " véhicule(s) libéré(s) automatiquement");
+            log.info("{} véhicule(s) libéré(s) automatiquement", vehiculesLiberes);
         }
     }
 
     /**
-     * Libération de secours - Vérifie les véhicules bloqués depuis longtemps
-     * (au cas où la date de fin estimée n'est pas définie)
+     * Filet de sécurité toutes les cinq minutes : un véhicule marqué indisponible
+     * sans aucune tournée planifiée est débloqué.
      */
-    @Scheduled(fixedRate = 300000) // Toutes les 5 minutes
+    @Scheduled(fixedRate = 300000)
     public void libererVehiculesBloques() {
-        System.out.println("🔧 Vérification véhicules bloqués...");
-
-        // Récupérer tous les véhicules non disponibles
         List<Vehicule> vehiculesBloques = vehiculeRepository.findByDisponibleFalse();
 
         for (Vehicule vehicule : vehiculesBloques) {
-            // Trouver la tournée associée au véhicule
             List<Tournee> tourneesVehicule = tourneeRepository.findByVehiculeAndStatus(vehicule, "PLANIFIÉE");
 
             if (tourneesVehicule.isEmpty()) {
-                // Si pas de tournée PLANIFIÉE pour ce véhicule, le libérer
                 vehicule.setDisponible(true);
                 vehiculeRepository.save(vehicule);
-                System.out.println("🔄 Véhicule débloqué (sans tournée): " + vehicule.getMatricule());
+                log.warn("Véhicule {} débloqué : aucune tournée planifiée ne le retenait", vehicule.getMatricule());
             }
         }
     }

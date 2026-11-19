@@ -10,12 +10,14 @@ import org.municipalite.gestiondechets.repository.EmployeRepository;
 import org.municipalite.gestiondechets.repository.TourneeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class IAService {
 
@@ -38,15 +40,13 @@ public class IAService {
      * Version adaptée à la structure SANS ZONE dans PointCollecte
      */
     public List<Tournee> optimiserAvecIASimple() {
-        System.out.println("🧠 Service IA - Démarrage optimisation intelligente");
-
         // 1. Récupérer TOUS les points critiques (> 70%)
         List<PointCollecte> points = pointCollecteRepository.findByNiveauRemplissageGreaterThan(70);
         List<Vehicule> vehicules = vehiculeRepository.findByDisponibleTrue();
         List<Employe> employes = employeRepository.findByDisponibleTrue();
 
         if (points.isEmpty()) {
-            System.out.println("❌ IA : Aucun point critique trouvé");
+            log.info("IA : aucun point critique, tournée de démonstration générée");
             return creerTourneeDemoIA();
         }
 
@@ -85,11 +85,8 @@ public class IAService {
         // 7. Sauvegarder la tournée
         Tournee savedTournee = tourneeRepository.save(tournee);
 
-        System.out.println("✅ IA : Tournée générée avec " + pointsIntelligents.size() + " points");
-        System.out.println("📊 IA - Statistiques:");
-        System.out.println("   Distance: " + savedTournee.getDistanceEstimee() + " km");
-        System.out.println("   Durée: " + savedTournee.getDureeEstimee() + " min");
-        System.out.println("   Économie estimée: " + calculerEconomie(distance) + " DT");
+        log.info("Tournée IA générée : {} points, {} km, {} min",
+                pointsIntelligents.size(), savedTournee.getDistanceEstimee(), savedTournee.getDureeEstimee());
 
         return Arrays.asList(savedTournee);
     }
@@ -126,8 +123,6 @@ public class IAService {
      * Version IA avancée avec clustering géographique
      */
     public List<Tournee> optimiserAvecIAAvancee() {
-        System.out.println("🧠🤖 Service IA Avancée - Clustering géographique");
-
         // 1. Récupérer les données
         List<PointCollecte> pointsCritiques = pointCollecteRepository.findByNiveauRemplissageGreaterThan(70);
         List<Vehicule> vehicules = vehiculeRepository.findByDisponibleTrue();
@@ -174,7 +169,7 @@ public class IAService {
             tournees.add(tourneeRepository.save(tournee));
         }
 
-        System.out.println("✅ IA Avancée: " + tournees.size() + " tournées créées par clustering");
+        log.info("IA avancée : {} tournée(s) créée(s) par clustering", tournees.size());
         return tournees;
     }
 
@@ -363,7 +358,7 @@ public class IAService {
      * Tournée de démo IA
      */
     private List<Tournee> creerTourneeDemoIA() {
-        System.out.println("🎭 IA : Création tournée de démo");
+        log.warn("IA : fabrication d'une tournée de démonstration, aucune donnée réelle disponible");
 
         // Points de démo IA
         List<PointCollecte> pointsDemo = Arrays.asList(

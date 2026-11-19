@@ -1,6 +1,7 @@
 package org.municipalite.gestiondechets.controller;
 
 import org.springframework.security.core.Authentication;
+import lombok.extern.slf4j.Slf4j;
 import org.municipalite.gestiondechets.model.Employe;
 import org.municipalite.gestiondechets.model.Equipe;
 import org.municipalite.gestiondechets.repository.EmployeRepository;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+@Slf4j
 @RestController
 @RequestMapping("/api/chef")
 @PreAuthorize("hasAnyRole('CHEF_EQUIPE', 'ADMIN')")
@@ -67,7 +69,7 @@ public class ChefEquipeController {
             ));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Impossible de charger l'équipe du chef connecté", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }

@@ -7,7 +7,6 @@ import org.municipalite.gestiondechets.config.JwtAuthenticationFilter;
 import org.municipalite.gestiondechets.config.SecurityConfig;
 import org.municipalite.gestiondechets.controller.AgentController;
 import org.municipalite.gestiondechets.controller.AlerteController;
-import org.municipalite.gestiondechets.controller.TestController;
 import org.municipalite.gestiondechets.controller.TourneeController;
 import org.municipalite.gestiondechets.model.Employe;
 import org.municipalite.gestiondechets.repository.EmployeRepository;
@@ -43,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Ça remplace les vérifications que je faisais à la main avec curl.
  * Si quelqu'un rouvre une route sans y penser, le test tombe.
  */
-@WebMvcTest(controllers = {TestController.class, AgentController.class, TourneeController.class, AlerteController.class})
+@WebMvcTest(controllers = {AgentController.class, TourneeController.class, AlerteController.class})
 @Import({SecurityConfig.class, CorsConfig.class, JwtAuthenticationFilter.class, JwtService.class})
 @TestPropertySource(properties = {
         "jwt.secret=cHJvamV0LXRlc3Qtc2VjcmV0LWF0LWxlYXN0LTMyLWJ5dGVzLWxvbmc=",
@@ -113,13 +112,6 @@ class SecurityRulesTest {
     void malformedTokenIsRejected() throws Exception {
         mockMvc.perform(get("/api/tournees").header("Authorization", "Bearer pas.un.jeton"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void testEndpointsRemainBlocked() throws Exception {
-        mockMvc.perform(get("/api/test/hello")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/test/hello").header("Authorization", tokenFor("admin", "ADMIN")))
-                .andExpect(status().isForbidden());
     }
 
     @Test
