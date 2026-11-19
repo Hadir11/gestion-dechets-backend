@@ -1,149 +1,184 @@
 # Gestion municipale des déchets
 
 [![CI](https://github.com/Hadir11/gestion-dechets-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/Hadir11/gestion-dechets-backend/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=springboot&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-5.0-47A248?logo=mongodb&logoColor=white)
 
-API REST de démonstration pour organiser la collecte des déchets à l’échelle d’une municipalité. Le backend est construit avec Spring Boot, Java 17 et MongoDB.
+API REST et interface web pour piloter la collecte des déchets d’une municipalité : points de collecte, alertes de remplissage, équipes, véhicules et tournées optimisées.
 
-> **État de sécurité :** l’API exige un jeton JWT valide, limite les écritures aux rôles autorisés, ne permet la création d’employés qu’à un administrateur et n’accepte plus d’inscriptions publiques. Avant un déploiement réel, configurez les secrets et domaines autorisés, puis exécutez les vérifications locales ci-dessous.
+Le projet est traité comme une application réelle, pas comme un exercice : authentification, autorisations par rôle, tests, intégration continue, documentation OpenAPI et configuration de déploiement. Un jeu de données de démonstration permet de le voir fonctionner en deux minutes.
 
-## Fonctionnalités
+---
 
-- Gestion des zones, points de collecte, déchets, alertes, équipes, employés, véhicules et tournées.
-- Suivi des alertes liées au remplissage et consultation de statistiques pour le tableau de bord.
-- Création et optimisation de tournées, avec un calcul de plus court chemin par Dijkstra.
-- Endpoints expérimentaux pour la prédiction du remplissage et la détection d’anomalies. Ces traitements sont heuristiques et doivent être évalués avant tout usage réel.
-- Authentification JWT sans session serveur, mots de passe hachés avec BCrypt et autorisations par rôle.
+## Aperçu
 
-## Technologies
+Trois rôles, trois expériences :
 
-- Java 17 et Spring Boot
-- Spring Web, Spring Security et Spring Data MongoDB
-- JWT (JJWT)
-- Maven
+| Rôle | Ce qu’il voit | Ce qu’il peut faire |
+| --- | --- | --- |
+| **Administrateur** | Tableau de bord global, effectifs, points de collecte, tournées | Créer et supprimer des comptes, gérer les employés, véhicules et zones |
+| **Chef d’équipe** | Son équipe, les alertes urgentes, l’optimisation | Affecter un agent à une tournée, traiter, escalader ou ignorer une alerte |
+| **Agent de collecte** | Ses missions du jour, la carte des points | Consulter ses tournées, signaler un incident ou un conteneur plein |
 
-## Prérequis
+L’optimisation prend les points au-dessus de 70 % de remplissage, calcule le meilleur ordre de passage par **Dijkstra** et n’affecte la tournée qu’à un véhicule et un agent réellement disponibles.
 
-- JDK 17
-- MongoDB accessible depuis l’application
-- Maven 3.8 ou plus récent
-- Node.js et npm pour le frontend
+---
 
-Le backend se trouve à la racine du dépôt. Le frontend Next.js est dans [frontend/](frontend/README.md).
+## Points forts
 
-## Configuration locale
+### Sécurité
 
-Copiez `src/main/resources/application-local.properties.example` vers `src/main/resources/application-local.properties`, puis adaptez l’URI MongoDB et remplacez le secret JWT par une valeur aléatoire d’au moins 32 octets. Ce fichier local est ignoré par Git.
+- **Chaîne JWT stateless** : filtre réactivé et branché avant `UsernamePasswordAuthenticationFilter`, aucune session serveur, jeton Bearer validé à chaque requête.
+- **Autorisations par rôle** à deux niveaux — règles d’URL et `@PreAuthorize` sur les contrôleurs — avec un refus explicite en 401 (non authentifié) et 403 (non autorisé), distincts d’un 404.
+- **Normalisation des rôles centralisée** : `AGENT_COLLECTE`, `AGENT`, `chef-equipe` convergent vers une seule autorité, de sorte que le filtre, les tableaux de bord et les contrôleurs ne peuvent pas diverger.
+- **Comptes** : mots de passe BCrypt (12 caractères minimum), unicité de l’identifiant et de l’e-mail, inscription réservée à l’administrateur, premier compte créé par un jeton de bootstrap à usage unique.
+- **Aucune fuite dans les réponses** : `password`, `authorities` et les getters internes de `UserDetails` sont exclus de la sérialisation JSON.
+- **CORS explicite** : origine unique configurable, cookies inter-origines désactivés, requêtes d’origine inconnue rejetées.
 
-Lancez MongoDB, puis démarrez l’application depuis la racine du projet :
+### Qualité et outillage
 
-```powershell
-mvn spring-boot:run "-Dspring-boot.run.profiles=local"
+- **15 tests automatisés** qui ne dépendent pas de MongoDB : la matrice d’accès est vérifiée à travers la vraie chaîne de filtres Spring Security, avec des jetons signés.
+- **CI GitHub Actions** sur chaque push et chaque pull request : `mvn verify` et `npm run build`.
+- **Documentation OpenAPI** servie par Swagger UI, schéma `bearer` inclus pour essayer les routes protégées depuis le navigateur.
+- **Build Docker multi-étapes**, image JRE Alpine, utilisateur non privilégié, sonde de santé `/actuator/health`.
+- **Jeu de démonstration idempotent** : un clone neuf n’affiche pas des tableaux de bord vides.
+
+### Métier
+
+- Modèle complet : zones, points de collecte, déchets, alertes, équipes, employés, véhicules, tournées.
+- Optimisation de tournée par plus court chemin (Dijkstra) sur un graphe de points géolocalisés, avec distance de Haversine.
+- Alertes typées et cycle de vie complet : traiter, escalader, ignorer, assigner une équipe, envoyer une instruction, replanifier.
+- Statistiques de tableau de bord calculées depuis la base — plus aucun chiffre codé en dur.
+
+---
+
+## Architecture
+
+```
+gestion-dechets/
+├── src/main/java/org/municipalite/gestiondechets/
+│   ├── config/        SecurityConfig, JwtAuthenticationFilter, CORS, OpenAPI, seed de démo
+│   ├── controller/    14 contrôleurs REST (auth, employés, alertes, tournées, IA…)
+│   ├── model/         entités MongoDB (Employe implémente UserDetails)
+│   ├── repository/    Spring Data MongoDB
+│   └── service/       logique métier + implémentations
+├── src/test/java/     tests de sécurité et de normalisation des rôles
+├── frontend/          Next.js 16 + React + TypeScript (15 écrans)
+├── Dockerfile         build multi-étapes
+├── render.yaml        blueprint de déploiement
+└── docs/              guide de déploiement, maquette
 ```
 
-Pour lancer la vérification Maven : `mvn test` (voir la section Tests plus bas).
+**68 fichiers Java**, **14 contrôleurs**, **67 routes**, **15 écrans** côté interface.
 
-En local, l’API écoute par défaut sur `http://localhost:18081`, comme configuré dans `.env.example` du frontend. Les routes sont préfixées par `/api` ; la connexion est disponible sous `/api/auth/login`. Les routes métier exigent `Authorization: Bearer <jeton>`.
+---
 
-### Données de démonstration
+## Matrice des accès
 
-Sur une base vide, l’application démarre sans aucune donnée : tableaux de bord à zéro et optimisation qui répond « aucun point critique ». Le profil `demo` charge un jeu complet (3 zones, 8 points de collecte, 6 employés, 3 véhicules, une équipe, 3 alertes, une tournée) :
+| Route | Anonyme | Agent | Chef d’équipe | Admin |
+| --- | :---: | :---: | :---: | :---: |
+| `POST /api/auth/login` | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/auth/bootstrap-admin` | 🗝️ jeton | — | — | — |
+| `POST /api/auth/register` | ❌ | ❌ | ❌ | ✅ |
+| `GET /api/**` (lecture) | ❌ | ✅ | ✅ | ✅ |
+| `POST /api/alertes` | ❌ | ✅ | ✅ | ✅ |
+| `GET /api/agent/mes-tournees` | ❌ | ✅ | ❌ | ❌ |
+| `GET /api/chef/**` | ❌ | ❌ | ✅ | ✅ |
+| `GET /api/tournees` | ❌ | ❌ | ✅ | ✅ |
+| `POST`/`PUT`/`PATCH /api/**` | ❌ | ❌ | ✅ | ✅ |
+| `DELETE /api/**` | ❌ | ❌ | ❌ | ✅ |
+| `/api/test/**` | ❌ | ❌ | ❌ | ❌ |
+
+Chaque ligne est couverte par un test : rouvrir une route par erreur fait échouer la CI.
+
+---
+
+## Démarrage en deux minutes
+
+Prérequis : JDK 17, Maven, MongoDB, Node.js 22.
 
 ```powershell
+# 1. Configuration locale
+Copy-Item src/main/resources/application-local.properties.example src/main/resources/application-local.properties
+#    → adaptez l'URI MongoDB et le secret JWT (32 caractères minimum)
+
+# 2. API + jeu de démonstration
 mvn spring-boot:run "-Dspring-boot.run.profiles=local,demo"
-```
 
-Le chargement est idempotent : il ne fait rien si des employés existent déjà. Les comptes créés partagent le mot de passe `admin123` (`admin`, `chef`, `agent`, `agent2`…). Ce profil est réservé à la démonstration locale, ne l’activez jamais en production.
-
-### Documentation interactive
-
-Une fois l’API démarrée : [http://localhost:18081/swagger-ui.html](http://localhost:18081/swagger-ui.html). Toutes les routes y sont décrites ; connectez-vous avec `/api/auth/login`, puis « Authorize » pour envoyer le jeton Bearer. Le contrat brut est disponible sur `/v3/api-docs`.
-
-### Création initiale de l’administrateur
-
-Si la base ne contient pas encore d’administrateur, démarrez l’API avec un jeton de configuration temporaire. Dans PowerShell :
-
-```powershell
-$env:BOOTSTRAP_ADMIN_TOKEN = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
-$env:BOOTSTRAP_ADMIN_TOKEN
-mvn spring-boot:run "-Dspring-boot.run.profiles=local"
-```
-
-Dans un autre terminal PowerShell, créez le premier compte. Choisissez un mot de passe unique d’au moins 12 caractères :
-
-```powershell
-$env:BOOTSTRAP_ADMIN_TOKEN = 'COLLER_ICI_LE_JETON_AFFICHE_DANS_LE_PREMIER_TERMINAL'
-$body = @{ nom = 'Admin'; prenom = 'Principal'; username = 'admin'; password = 'CHOISIR_UN_SECRET_LONG'; email = 'admin@example.local' } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri 'http://localhost:18081/api/auth/bootstrap-admin' -Headers @{ 'X-Bootstrap-Token' = $env:BOOTSTRAP_ADMIN_TOKEN } -ContentType 'application/json' -Body $body
-```
-
-Après la création, arrêtez l’API, retirez le jeton avec `Remove-Item Env:BOOTSTRAP_ADMIN_TOKEN`, puis redémarrez-la. Le point de création initial refuse toute nouvelle création dès qu’un administrateur existe. Les comptes suivants se créent depuis l’interface en étant connecté comme administrateur.
-
-## Frontend
-
-Dans un autre terminal, à partir du dossier `frontend` :
-
-```powershell
+# 3. Interface
+cd frontend
 npm ci
 Copy-Item .env.example .env.local
 npm run dev
 ```
 
-L’interface écoute sur `http://localhost:3000`. Elle utilise `NEXT_PUBLIC_API_BASE_URL` pour joindre l’API ; la valeur locale par défaut est `http://localhost:18081/api`.
+- API : <http://localhost:18081> — documentation : <http://localhost:18081/swagger-ui.html>
+- Interface : <http://localhost:3000>
+- Comptes de démonstration : `admin`, `chef`, `agent` — mot de passe `admin123`
 
-Pour compiler le frontend : `npm run build`. Pour le lancer en mode production après la compilation : `npm run start`.
+Le profil `demo` crée 3 zones, 8 points de collecte, 6 employés, 3 véhicules, une équipe, 3 alertes et une tournée planifiée. Il ne fait rien si la base contient déjà des employés.
 
-## Principales routes
+### Création du premier administrateur (hors démonstration)
 
-| Domaine | Préfixe |
-| --- | --- |
-| Authentification | `/api/auth` |
-| Alertes | `/api/alertes` |
-| Points de collecte | `/api/points` |
-| Tournées | `/api/tournees` |
-| Employés et équipes | `/api/employes`, `/api/equipes`, `/api/chef` |
-| Véhicules et zones | `/api/vehicules`, `/api/zones` |
-| Statistiques et fonctions expérimentales | `/api/statistiques`, `/api/ia` |
+```powershell
+$env:BOOTSTRAP_ADMIN_TOKEN = [guid]::NewGuid().ToString('N')
+mvn spring-boot:run "-Dspring-boot.run.profiles=local"
+```
 
-Les contrôleurs documentent les opérations disponibles. Aucun contrat OpenAPI n’est actuellement fourni.
+Puis appelez `POST /api/auth/bootstrap-admin` avec l’en-tête `X-Bootstrap-Token` et le compte à créer. Le point d’entrée refuse toute création dès qu’un administrateur existe ; retirez ensuite la variable.
 
-## Tests
+---
+
+## Tests et intégration continue
 
 ```powershell
 mvn test
 ```
 
-La suite couvre la normalisation des rôles et la matrice d’accès réelle, en passant par la chaîne de filtres Spring Security et des jetons JWT signés : requêtes anonymes refusées, jeton invalide rejeté, agent bloqué sur les tournées, admin bloqué sur l’endpoint agent, `/api/test/**` fermé, route inconnue en 404 une fois authentifié. Aucun test ne nécessite MongoDB.
+| Suite | Couverture |
+| --- | --- |
+| `EmployeAuthoritiesTest` | Normalisation des rôles, rôle absent, absence de `password` et `authorities` dans le JSON |
+| `SecurityRulesTest` | Chaîne de filtres réelle : anonyme et jeton invalide rejetés, agent bloqué sur les tournées, admin bloqué sur l’endpoint agent, `/api/test/**` fermé, route inconnue en 404, création d’alerte en 201 |
 
-L’intégration continue (`.github/workflows/ci.yml`) rejoue `mvn verify` et `npm run build` à chaque push sur `main` et sur chaque pull request.
+Aucun test ne nécessite MongoDB : `mvn test` passe sur un clone vierge. La CI rejoue ces tests et le build frontend à chaque push sur `main` et sur chaque pull request.
 
+---
+
+## Documentation de l’API
+
+- Swagger UI : `/swagger-ui.html`
+- Contrat brut : `/v3/api-docs`
+
+Connectez-vous via `POST /api/auth/login`, puis cliquez sur **Authorize** et collez le jeton pour essayer les routes protégées.
+
+---
 
 ## Déploiement
 
-Le profil `prod` exige `MONGODB_URI`, `JWT_SECRET` (au moins 32 octets aléatoires) et `CORS_ALLOWED_ORIGINS` (origines exactes, séparées par des virgules). Ne définissez `BOOTSTRAP_ADMIN_TOKEN` que pendant la création initiale du compte, puis retirez-le et redémarrez l’API. Utilisez HTTPS, un compte MongoDB aux privilèges minimaux et des secrets dédiés à chaque environnement.
+- **Image Docker** : `docker build -t gestion-dechets .` — multi-étapes, JRE Alpine, utilisateur non privilégié, profil `prod`.
+- **Render** : le fichier [`render.yaml`](render.yaml) décrit le service ; `MONGODB_URI` et `CORS_ALLOWED_ORIGINS` sont à renseigner, `JWT_SECRET` est généré.
+- **Vercel** : déploie `frontend/` avec `NEXT_PUBLIC_API_BASE_URL` pointant vers l’API publique.
 
-### Image Docker
+Le profil `prod` n’accepte aucune valeur par défaut pour les secrets : il refuse de démarrer sans `MONGODB_URI`, `JWT_SECRET` (32 octets minimum) et `CORS_ALLOWED_ORIGINS`.
 
-```powershell
-docker build -t gestion-dechets .
-docker run --rm -p 8080:8080 `
-  -e MONGODB_URI="mongodb+srv://…" `
-  -e JWT_SECRET="…" `
-  -e CORS_ALLOWED_ORIGINS="https://votre-frontend" `
-  gestion-dechets
-```
+Déroulé complet, étape par étape : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
 
-L’image est multi-étapes (Maven puis JRE Alpine), tourne sous un utilisateur non privilégié et expose `/actuator/health` pour les sondes.
+---
 
-### Render
+## Limites connues
 
-Le fichier [render.yaml](render.yaml) décrit le service web. MongoDB n’est pas fourni par Render : créez un cluster MongoDB Atlas, autorisez l’IP sortante de Render, puis renseignez `MONGODB_URI` et `CORS_ALLOWED_ORIGINS` lors du premier déploiement. `JWT_SECRET` est généré automatiquement.
+Un projet de portfolio gagne à dire ce qu’il ne fait pas encore :
 
-Le frontend se déploie séparément (Vercel ou équivalent) avec `NEXT_PUBLIC_API_BASE_URL` pointant vers l’URL publique de l’API, suffixée de `/api`.
+- Pas de tests côté frontend ni de lint configuré ; la CI ne vérifie que la compilation TypeScript.
+- Pas de jeton de rafraîchissement : à l’expiration, il faut se reconnecter.
+- Pas de pagination sur les listes, ni de limitation du débit sur `POST /api/auth/login`.
+- Les fonctions dites « IA » (prédiction de remplissage, anomalies) sont des heuristiques, pas des modèles entraînés.
+- Aucune licence n’est encore attachée au dépôt.
 
-Le déroulé complet, étape par étape (Atlas, Render, Vercel, création du premier administrateur, vérifications), est décrit dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
-
-
+---
 
 ## État du projet
 
-Projet de démonstration/portfolio. Les fonctions de prédiction et d’optimisation dites « IA » reposent en partie sur des heuristiques ou des données de démonstration ; elles ne constituent pas un système validé pour une exploitation municipale réelle.
+Projet de démonstration et de portfolio. Les fonctions de prédiction et d’optimisation reposent en partie sur des heuristiques ou des données de démonstration ; elles ne constituent pas un système validé pour une exploitation municipale réelle.
