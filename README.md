@@ -98,6 +98,9 @@ mvn test
 
 La suite couvre la normalisation des rôles et la matrice d’accès réelle, en passant par la chaîne de filtres Spring Security et des jetons JWT signés : requêtes anonymes refusées, jeton invalide rejeté, agent bloqué sur les tournées, admin bloqué sur l’endpoint agent, `/api/test/**` fermé, route inconnue en 404 une fois authentifié. Aucun test ne nécessite MongoDB.
 
+L’intégration continue (`.github/workflows/ci.yml`) rejoue `mvn verify` et `npm run build` à chaque push sur `main` et sur chaque pull request.
+
+
 ## Déploiement
 
 Le profil `prod` exige `MONGODB_URI`, `JWT_SECRET` (au moins 32 octets aléatoires) et `CORS_ALLOWED_ORIGINS` (origines exactes, séparées par des virgules). Ne définissez `BOOTSTRAP_ADMIN_TOKEN` que pendant la création initiale du compte, puis retirez-le et redémarrez l’API. Utilisez HTTPS, un compte MongoDB aux privilèges minimaux et des secrets dédiés à chaque environnement.
