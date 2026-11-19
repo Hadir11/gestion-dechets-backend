@@ -24,7 +24,7 @@ jobs:
         run: mvn -B verify
 
   frontend:
-    name: Frontend - build TypeScript
+    name: Frontend - lint, tests et build
     runs-on: ubuntu-latest
     defaults:
       run:
